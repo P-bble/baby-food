@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light-mode">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>辅食分析</title>
+    <style>
+        :root.light-mode {
+            --bg-main: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            --card-bg: #fff;
+            --text-main: #444;
+            --text-secondary: #888;
+            --primary: #ff8fab;
+            --happy: #67c28e;
+            --sad: #ff6b6b;
+            --border: #eee;
+            --table-header: #f9fafc;
+        }
+        :root.dark-mode {
+            --bg-main: linear-gradient(135deg, #1f2125 0%, #121417 100%);
+            --card-bg: #27292d;
+            --text-main: #f5f5f5;
+            --text-secondary: #c0c4cc;
+            --primary: #ff9eb5;
+            --happy: #72d392;
+            --sad: #ff7a7a;
+            --border: #38393d;
+            --table-header: #333;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:PingFang SC,Microsoft YaHei,sans-serif}
+        body{background:var(--bg-main);padding:20px}
+        .container{max-width:600px;margin:0 auto}
+        .nav-bar{display:flex;justify-content:space-between;gap:8px;margin-bottom:20px}
+        .nav-btn{padding:10px 16px;border-radius:12px;border:none;background:var(--card-bg);color:var(--primary);cursor:pointer}
+        .card{background:var(--card-bg);border-radius:20px;padding:24px;box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+        table{width:100%;border-collapse:collapse;margin-top:20px}
+        th{background:var(--table-header);padding:12px;text-align:left;color:var(--text-secondary)}
+        td{padding:12px;border-bottom:1px solid var(--border);color:var(--text-main)}
+        .summary{margin-top:20px;font-size:14px;color:var(--text-secondary)}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="nav-bar">
+        <button class="nav-btn" onclick="location.href='index.html'">← 记录页</button>
+        <button class="nav-btn" onclick="location.href='unlocked.html'">🎉 解锁</button>
+        <button class="nav-btn" id="modeSwitch">🌙 夜间</button>
+    </div>
+    <div class="card">
+        <h2 style="color:var(--primary);margin-bottom:16px">📊 辅食喂养记录表</h2>
+        <table>
+            <thead>
+                <tr><th>日期</th><th>辅食</th><th>份量</th><th>状态</th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+        <div class="summary" id="summary"></div>
+    </div>
+</div>
+<script>
+window.onload=()=>{
+    const m=localStorage.getItem('babyFoodRecordMode')||'light-mode';
+    document.documentElement.className=m;
+    document.getElementById('modeSwitch').innerText=m=='light-mode'?'🌙 夜间':'☀️ 日间';
+    renderTable();
+}
+document.getElementById('modeSwitch').onclick=()=>{
+    const root=document.documentElement;
+    const now=root.className;
+    const next=now=='light-mode'?'dark-mode':'light-mode';
+    root.className=next;
+    localStorage.setItem('babyFoodRecordMode',next);
+    document.getElementById('modeSwitch').innerText=next=='light-mode'?'🌙 夜间':'☀️ 日间';
+}
+function renderTable(){
+    const arr=JSON.parse(localStorage.getItem('babyFoodRecords'))||[];
+    const b=document.getElementById('tableBody');
+    if(arr.length===0){b.innerHTML='<tr><td colspan="4" style="text-align:center">暂无记录</td></tr>';return}
+    arr.sort((a,b)=>new Date(b.date+b.time)-new Date(a.date+a.time));
+    b.innerHTML=arr.map(i=>`
+    <tr>
+        <td>${i.date} ${i.time}</td>
+        <td>${i.food}</td>
+        <td>${i.amount}</td>
+        <td>${i.babyStatus=='happy'?'😊 佳':'😢 一般'}</td>
+    </tr>`).join('');
+    const happy=arr.filter(i=>i.babyStatus=='happy').length;
+    const rate=arr.length?((happy/arr.length)*100).toFixed(1):0;
+    document.getElementById('summary').innerText=`共 ${arr.length} 条 | 好评率 ${rate}%`;
+}
+</script>
+</body>
+</html>

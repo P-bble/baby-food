@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light-mode">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>解锁图鉴</title>
+    <style>
+        :root.light-mode {
+            --bg-main: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            --card-bg: #fff;
+            --text-main: #444;
+            --text-secondary: #888;
+            --unlock-color: #ffd700;
+            --border: #eee;
+        }
+        :root.dark-mode {
+            --bg-main: linear-gradient(135deg, #1f2125 0%, #121417 100%);
+            --card-bg: #27292d;
+            --text-main: #f5f5f5;
+            --text-secondary: #c0c4cc;
+            --unlock-color: #ffd700;
+            --border: #38393d;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:PingFang SC,Microsoft YaHei,sans-serif}
+        body{background:var(--bg-main);padding:20px}
+        .container{max-width:600px;margin:0 auto}
+        .nav-bar{display:flex;justify-content:space-between;margin-bottom:20px}
+        .nav-btn{padding:10px 16px;border-radius:12px;border:none;background:var(--card-bg);color:var(--unlock-color);cursor:pointer}
+        .card{background:var(--card-bg);border-radius:20px;padding:24px}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:20px}
+        .item{padding:20px;border-radius:16px;border:2px solid var(--unlock-color);text-align:center}
+        .empty{text-align:center;padding:40px;color:var(--text-secondary)}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="nav-bar">
+        <button class="nav-btn" onclick="location.href='index.html'">← 返回</button>
+        <button class="nav-btn" onclick="location.href='analysis.html'">📊 分析</button>
+    </div>
+    <div class="card">
+        <h2 style="color:var(--unlock-color);text-align:center">🎖️ 已解锁辅食</h2>
+        <div class="grid" id="grid"></div>
+        <div class="empty" id="empty">暂无解锁，连续3天状态佳即可解锁</div>
+    </div>
+</div>
+<script>
+window.onload=()=>{
+    const m=localStorage.getItem('babyFoodRecordMode')||'light-mode';
+    document.documentElement.className=m;
+    render();
+};
+function render(){
+    const arr=JSON.parse(localStorage.getItem('unlockedFoods'))||[];
+    const g=document.getElementById('grid');
+    const e=document.getElementById('empty');
+    if(arr.length===0){e.style.display='block';g.innerHTML='';return}
+    e.style.display='none';
+    g.innerHTML=arr.map(f=>`<div class="item"><div style="font-size:30px;margin-bottom:10px">🥣</div><div>${f}</div></div>`).join('');
+}
+</script>
+</body>
+</html>
