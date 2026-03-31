@@ -1,17 +1,22 @@
 const AI_CONFIG = {
-  apiKey: "在这里填入你的大模型API KEY",
-  apiUrl: "https://api.openai.com/v1/chat/completions",
-  model: "gpt-3.5-turbo"
+  apiUrl: "/api/ai"
 };
 
 const FOOD_CATEGORIES = [
-  "全部","蔬菜类","谷物类","肉类","蛋类","水果类","补铁","补钙","手指食物"
+  "全部", "蔬菜类", "谷物类", "肉类", "蛋类", "水果类", "补铁", "补钙", "手指食物"
 ];
 
-function getRecommendPrompt(unlocked, love, category, age) {
-  let extra = category !== "全部" ? `，分类：${category}` : "";
-  return `你是专业辅食营养师，给${age}宝宝推荐1款简单辅食，步骤≤5步。
-已解锁：${unlocked.join("、")||"无"}
-宝宝爱吃：${love.join("、")||"无"}
-要求：${extra}，格式：名称、食材、步骤、营养、过敏提示。`;
+function getPrompt(age, category) {
+  return `
+你是专业宝宝辅食营养师，推荐1款适合${age}宝宝的辅食，
+分类要求：${category}。
+严格按以下格式输出，不要多余内容：
+
+辅食名称：
+食材：
+步骤：
+营养亮点：
+过敏提示：
+推荐抖音做法视频：
+`;
 }
