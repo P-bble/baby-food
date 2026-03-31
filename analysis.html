@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light-mode">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>辅食分析</title>
+<style>
+:root.light-mode{--bg-main:linear-gradient(135deg,#fdfbfb 0%,#ebedee 100%);--card-bg:#fff;--text-main:#444;--text-secondary:#888;--primary:#ff8fab;--border:#eee}
+:root.dark-mode{--bg-main:linear-gradient(135deg,#1f2125 0%,#121417 100%);--card-bg:#27292d;--text-main:#f5f5f5;--text-secondary:#c0c4cc;--primary:#ff9eb5;--border:#38393d}
+*{margin:0;padding:0;box-sizing:border-box;font-family:PingFang SC,Microsoft YaHei,sans-serif}
+body{background:var(--bg-main);padding:20px}
+.container{max-width:600px;margin:0 auto}
+.nav-bar{display:flex;justify-content:space-between;margin-bottom:20px}
+.nav-btn{padding:10px 14px;border-radius:12px;border:none;background:var(--card-bg);color:var(--primary);cursor:pointer}
+.card{background:var(--card-bg);border-radius:20px;padding:24px}
+table{width:100%;border-collapse:collapse;margin-top:20px}
+th,td{padding:12px;text-align:left;border-bottom:1px solid var(--border)}
+th{color:var(--text-secondary)}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="nav-bar">
+    <button class="nav-btn" onclick="location.href='index.html'">← 记录页</button>
+    <button class="nav-btn" onclick="location.href='unlocked.html'">解锁图鉴</button>
+    <button class="nav-btn" id="mode">🌙 夜间</button>
+  </div>
+  <div class="card">
+    <h2 style="color:var(--primary);margin-bottom:20px">📊 辅食喂养记录表</h2>
+    <table>
+      <thead>
+        <tr><th>日期</th><th>辅食</th><th>份量</th><th>状态</th></tr>
+      </thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </div>
+</div>
+<script>
+window.onload=()=>{
+  const m=localStorage.getItem("mode")||"light-mode";
+  document.documentElement.className=m;
+  mode.innerText=m=="light-mode"?"🌙 夜间":"☀️ 日间";
+  const a=JSON.parse(localStorage.getItem("babyFoodRecords"))||[];
+  tb.innerHTML=a.length?a.map(i=>`
+  <tr>
+    <td>${i.date}</td>
+    <td>${i.food}</td>
+    <td>${i.amount||'-'}</td>
+    <td>${i.status=='happy'?'😊 爱吃':'😢 一般'}</td>
+  </tr>`).join(""):"<tr><td colspan=4 style='text-align:center'>无记录</td></tr>";
+}
+mode.onclick=()=>{
+  const now=document.documentElement.className;
+  const next=now=="light-mode"?"dark-mode":"light-mode";
+  document.documentElement.className=next;
+  localStorage.setItem("mode",next);
+  mode.innerText=next=="light-mode"?"🌙 夜间":"☀️ 日间";
+}
+</script>
+</body>
+</html>
