@@ -1,5 +1,5 @@
 export async function onRequest(context) {
-  // 跨域头必须写死，确保浏览器允许访问
+  // 跨域头必须写死
   const headers = {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
@@ -14,25 +14,23 @@ export async function onRequest(context) {
 
   try {
     const { request, env } = context;
-    const { prompt } = await request.json();
+    const body = await request.json();
+    const prompt = body.prompt;
     
-    // 你的密钥（已经确认正确）
+    // 🔥 这里读取你的环境变量
     const apiKey = env.VOLC_API_KEY;
     if (!apiKey) {
       return new Response(JSON.stringify({ result: "❌ 请检查 Cloudflare 环境变量" }), { headers, status: 400 });
     }
 
-    // 你的模型 ID（截图里确认过）
     const modelId = "doubao-1-5-lite-32k-250115";
-    
-    // 火山引擎接口地址
     const apiUrl = "https://ark.cn-beijing.volces.com/api/v3/chat/completions";
 
-    // 直接构造请求，调用AI
+    // 🔥 关键修改！用 X-Api-Key 而不是 Bearer
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'X-Api-Key': apiKey, // ✅ 新密钥必须用这个头
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -46,18 +44,15 @@ export async function onRequest(context) {
 
     const data = await response.json();
     
-    // 如果返回错误，直接捕获
     if (data.error) {
       return new Response(JSON.stringify({ result: `❌ AI调用失败: ${data.error.message}` }), { headers, status: 500 });
     }
 
     const result = data.choices?.[0]?.message?.content || "✅ 生成成功";
     
-    // 正常返回结果
     return new Response(JSON.stringify({ result }), { headers });
 
   } catch (error) {
-    // 捕获所有网络错误，返回友好提示
-    return new Response(JSON.stringify({ result: `❌ 网络错误/连接失败: ${error.message}` }), { headers, status: 500 });
+    return new Response(JSON.stringify({ result: `❌ 捕获错误: ${error.message}` }), { headers, status: 500 });
   }
 }
