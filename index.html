@@ -1,141 +1,170 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>宝宝辅食记录</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: "Microsoft Yahei", sans-serif;
-        }
-        body {
-            background: #fef5f8;
-            padding: 20px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        h1 {
-            color: #ff69b4;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 28px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #666;
-            font-size: 16px;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 15px;
-            border: 1px solid #eee;
-            border-radius: 12px;
-            font-size: 16px;
-            background: #fafafa;
-        }
-        textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-        .btn {
-            width: 100%;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 10px;
-            transition: all 0.3s;
-        }
-        .btn-pink {
-            background: #ff69b4;
-            color: white;
-        }
-        .btn-pink:hover {
-            background: #ff1493;
-        }
-        .food-list {
-            margin-top: 30px;
-        }
-        .food-item {
-            background: #fff9fc;
-            border-radius: 12px;
-            padding: 18px;
-            margin-bottom: 15px;
-            border-left: 4px solid #ff69b4;
-        }
-        .food-time {
-            color: #999;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-        .food-name {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 8px;
-        }
-        .food-desc {
-            color: #666;
-            line-height: 1.6;
-        }
-        .empty-tip {
-            text-align: center;
-            color: #999;
-            padding: 40px 0;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宝宝辅食</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
+  body{background:#fff5f7}
+  .page{display:none;padding:20px;max-width:400px;margin:0 auto}
+  .page.active{display:block}
+  .title{font-size:24px;font-weight:bold;text-align:center;margin:20px 0;color:#ff69b4}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+  .food{background:white;border-radius:16px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+  .food h3{margin:10px 0;color:#333}
+  .food.locked{opacity:0.5}
+  .btn{background:#ff69b4;color:white;border:none;border-radius:14px;padding:12px;width:100%;margin-top:10px;font-weight:bold}
+  .nav{display:flex;gap:10px;margin-top:30px}
+  .nav button{flex:1;background:white;border:1px solid #ff69b4;color:#ff69b4;border-radius:12px;padding:12px}
+  .nav button.active{background:#ff69b4;color:white}
+  .popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);display:none;align-items:center;justify-content:center}
+  .popup-box{background:white;padding:30px;border-radius:20px;text-align:center;max-width:300px}
+  .popup-box h2{color:#ff69b4;margin-bottom:10px}
+  .popup-box p{margin-bottom:20px}
+  .record-table{width:100%;background:white;border-radius:16px;overflow:hidden;margin-top:20px}
+  .record-table table{width:100%;border-collapse:collapse}
+  .record-table th,.record-table td{padding:12px;text-align:left;border-bottom:1px solid #f0f0f0;font-size:14px}
+  .record-table th{background:#fff5f7;color:#ff69b4}
+  .form{background:white;border-radius:16px;padding:20px;margin-top:20px}
+  .form input,.form select{width:100%;padding:12px;margin-bottom:12px;border:1px solid #eee;border-radius:12px}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>🍼 宝宝辅食记录</h1>
 
-        <!-- 新增辅食表单（含时间） -->
-        <div class="form-group">
-            <label for="foodTime">辅食时间</label>
-            <input type="datetime-local" id="foodTime" required>
-        </div>
-        <div class="form-group">
-            <label for="foodName">辅食名称</label>
-            <input type="text" id="foodName" placeholder="例如：南瓜泥、高铁米粉" required>
-        </div>
-        <div class="form-group">
-            <label for="foodCategory">辅食分类</label>
-            <select id="foodCategory">
-                <option value="全部">全部</option>
-                <option value="蔬菜类">蔬菜类</option>
-                <option value="水果类">水果类</option>
-                <option value="主食类">主食类</option>
-                <option value="肉类">肉类</option>
-                <option value="蛋类">蛋类</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="foodDesc">辅食详情/做法</label>
-            <textarea id="foodDesc" placeholder="记录食材、做法、宝宝食用情况等"></textarea>
-        </div>
-        <button class="btn btn-pink" id="addBtn">➕ 添加辅食记录</button>
-
-        <!-- 辅食记录列表 -->
-        <div class="food-list" id="foodList">
-            <div class="empty-tip">暂无辅食记录，快来添加第一条吧~</div>
-        </div>
+<!-- 主页面：辅食图鉴（游戏化解锁） -->
+<div class="page active" id="pageMain">
+  <div class="title">🍼 宝宝辅食图鉴</div>
+  <div class="grid">
+    <div class="food" data-name="高铁米粉" data-index="0">
+      <h3>高铁米粉</h3>
+      <button class="btn" onclick="unlock(0)">解锁</button>
     </div>
+    <div class="food locked" data-name="南瓜泥" data-index="1">
+      <h3>南瓜泥</h3>
+      <button class="btn" onclick="unlock(1)">解锁</button>
+    </div>
+    <div class="food locked" data-name="土豆泥" data-index="2">
+      <h3>土豆泥</h3>
+      <button class="btn" onclick="unlock(2)">解锁</button>
+    </div>
+    <div class="food locked" data-name="苹果泥" data-index="3">
+      <h3>苹果泥</h3>
+      <button class="btn" onclick="unlock(3)">解锁</button>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="active" onclick="go('main')">辅食图鉴</button>
+    <button onclick="go('record')">辅食记录</button>
+  </div>
+</div>
 
-    <script src="config.js"></script>
+<!-- 记录页面：表格 -->
+<div class="page" id="pageRecord">
+  <div class="title">📋 宝宝辅食记录</div>
+  <div class="form">
+    <input type="text" id="age" placeholder="宝宝月龄（如：7个月）">
+    <input type="text" id="food" placeholder="辅食名称">
+    <select id="type">
+      <option>主食类</option>
+      <option>蔬菜类</option>
+      <option>水果类</option>
+      <option>肉类</option>
+    </select>
+    <button class="btn" onclick="addRecord()">添加记录</button>
+  </div>
+  <div class="record-table">
+    <table>
+      <thead>
+        <tr>
+          <th>月龄</th>
+          <th>辅食</th>
+          <th>类型</th>
+        </tr>
+      </thead>
+      <tbody id="recordList"></tbody>
+    </table>
+  </div>
+  <div class="nav">
+    <button onclick="go('main')">辅食图鉴</button>
+    <button class="active" onclick="go('record')">辅食记录</button>
+  </div>
+</div>
+
+<!-- 解锁成功弹窗 -->
+<div class="popup" id="popup">
+  <div class="popup-box">
+    <h2>🎉 解锁成功！</h2>
+    <p id="popupText">获得新辅食：高铁米粉</p>
+    <button class="btn" onclick="closePopup()">确定</button>
+  </div>
+</div>
+
+<script>
+let unlocked = JSON.parse(localStorage.getItem('unlocked')) || [true,false,false,false];
+let records = JSON.parse(localStorage.getItem('records')) || [];
+
+// 初始化
+renderFood();
+renderRecords();
+
+// 解锁食物
+function unlock(i){
+  if(unlocked[i]) return alert('已经解锁啦！');
+  const name = document.querySelectorAll('.food')[i].dataset.name;
+  unlocked[i] = true;
+  localStorage.setItem('unlocked',JSON.stringify(unlocked));
+  renderFood();
+  document.getElementById('popupText').textContent = '获得新辅食：'+name;
+  document.getElementById('popup').style.display = 'flex';
+}
+
+// 刷新食物状态
+function renderFood(){
+  document.querySelectorAll('.food').forEach((el,i)=>{
+    if(unlocked[i]) el.classList.remove('locked');
+    else el.classList.add('locked');
+  });
+}
+
+// 关闭弹窗
+function closePopup(){
+  document.getElementById('popup').style.display = 'none';
+}
+
+// 切换页面
+function go(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page'+page.charAt(0).toUpperCase()+page.slice(1)).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// 添加记录
+function addRecord(){
+  const age = document.getElementById('age').value.trim();
+  const food = document.getElementById('food').value.trim();
+  const type = document.getElementById('type').value;
+  if(!age||!food) return alert('请填写完整');
+  records.push({age,food,type});
+  localStorage.setItem('records',JSON.stringify(records));
+  renderRecords();
+  document.getElementById('age').value='';
+  document.getElementById('food').value='';
+}
+
+// 渲染记录
+function renderRecords(){
+  const list = document.getElementById('recordList');
+  list.innerHTML = records.map(r=>`
+  <tr>
+    <td>${r.age}</td>
+    <td>${r.food}</td>
+    <td>${r.type}</td>
+  </tr>
+  `).join('');
+}
+</script>
+
 </body>
 </html>
