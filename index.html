@@ -28,6 +28,9 @@
   .record-table th{background:#fff5f7;color:#ff69b4}
   .form{background:white;border-radius:16px;padding:20px;margin-top:20px}
   .form input,.form select{width:100%;padding:12px;margin-bottom:12px;border:1px solid #eee;border-radius:12px}
+  .feedback{display:flex;gap:10px;margin-bottom:12px}
+  .feedback button{flex:1;padding:10px;border-radius:12px;border:1px solid #eee;background:white}
+  .feedback button.active{background:#ff69b4;color:white}
 </style>
 </head>
 <body>
@@ -36,21 +39,21 @@
 <div class="page active" id="pageMain">
   <div class="title">🍼 宝宝辅食图鉴</div>
   <div class="grid">
-    <div class="food" data-name="高铁米粉" data-index="0">
+    <div class="food" data-food="高铁米粉" data-index="0">
       <h3>高铁米粉</h3>
-      <button class="btn" onclick="unlock(0)">解锁</button>
+      <span>🔓 已解锁</span>
     </div>
-    <div class="food locked" data-name="南瓜泥" data-index="1">
+    <div class="food locked" data-food="南瓜泥" data-index="1">
       <h3>南瓜泥</h3>
-      <button class="btn" onclick="unlock(1)">解锁</button>
+      <span>🔒 未解锁</span>
     </div>
-    <div class="food locked" data-name="土豆泥" data-index="2">
+    <div class="food locked" data-food="土豆泥" data-index="2">
       <h3>土豆泥</h3>
-      <button class="btn" onclick="unlock(2)">解锁</button>
+      <span>🔒 未解锁</span>
     </div>
-    <div class="food locked" data-name="苹果泥" data-index="3">
+    <div class="food locked" data-food="苹果泥" data-index="3">
       <h3>苹果泥</h3>
-      <button class="btn" onclick="unlock(3)">解锁</button>
+      <span>🔒 未解锁</span>
     </div>
   </div>
   <div class="nav">
@@ -64,6 +67,7 @@
   <div class="title">📋 宝宝辅食记录</div>
   <div class="form">
     <input type="text" id="age" placeholder="宝宝月龄（如：7个月）">
+    <input type="datetime-local" id="eatTime">
     <input type="text" id="food" placeholder="辅食名称">
     <select id="type">
       <option>主食类</option>
@@ -71,6 +75,10 @@
       <option>水果类</option>
       <option>肉类</option>
     </select>
+    <div class="feedback">
+      <button id="good" onclick="setFeed(1)">😊 吃得好</button>
+      <button id="bad" onclick="setFeed(0)">😢 不喜欢</button>
+    </div>
     <button class="btn" onclick="addRecord()">添加记录</button>
   </div>
   <div class="record-table">
@@ -78,8 +86,9 @@
       <thead>
         <tr>
           <th>月龄</th>
+          <th>时间</th>
           <th>辅食</th>
-          <th>类型</th>
+          <th>反馈</th>
         </tr>
       </thead>
       <tbody id="recordList"></tbody>
@@ -95,76 +104,94 @@
 <div class="popup" id="popup">
   <div class="popup-box">
     <h2>🎉 解锁成功！</h2>
-    <p id="popupText">获得新辅食：高铁米粉</p>
+    <p id="popupText">宝宝连续3天爱吃，解锁新辅食！</p>
     <button class="btn" onclick="closePopup()">确定</button>
   </div>
 </div>
 
 <script>
-let unlocked = JSON.parse(localStorage.getItem('unlocked')) || [true,false,false,false];
-let records = JSON.parse(localStorage.getItem('records')) || [];
+let unlocked = JSON.parse(localStorage.getItem('unlocked')) ?? [true, false, false, false];
+let records = JSON.parse(localStorage.getItem('records')) ?? [];
+let currentFeed = null;
+const foodList = ["高铁米粉","南瓜泥","土豆泥","苹果泥"];
 
-// 初始化
 renderFood();
 renderRecords();
 
-// 解锁食物
-function unlock(i){
-  if(unlocked[i]) return alert('已经解锁啦！');
-  const name = document.querySelectorAll('.food')[i].dataset.name;
-  unlocked[i] = true;
-  localStorage.setItem('unlocked',JSON.stringify(unlocked));
-  renderFood();
-  document.getElementById('popupText').textContent = '获得新辅食：'+name;
-  document.getElementById('popup').style.display = 'flex';
-}
-
-// 刷新食物状态
-function renderFood(){
-  document.querySelectorAll('.food').forEach((el,i)=>{
-    if(unlocked[i]) el.classList.remove('locked');
-    else el.classList.add('locked');
-  });
-}
-
-// 关闭弹窗
-function closePopup(){
-  document.getElementById('popup').style.display = 'none';
-}
-
-// 切换页面
-function go(page){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav button').forEach(n=>n.classList.remove('active'));
-  document.getElementById('page'+page.charAt(0).toUpperCase()+page.slice(1)).classList.add('active');
+function setFeed(type) {
+  currentFeed = type;
+  document.querySelectorAll('.feedback button').forEach(b=>b.classList.remove('active'));
   event.target.classList.add('active');
 }
 
-// 添加记录
-function addRecord(){
+function addRecord() {
   const age = document.getElementById('age').value.trim();
+  const eatTime = document.getElementById('eatTime').value;
   const food = document.getElementById('food').value.trim();
   const type = document.getElementById('type').value;
-  if(!age||!food) return alert('请填写完整');
-  records.push({age,food,type});
-  localStorage.setItem('records',JSON.stringify(records));
+  if (!age || !eatTime || !food || currentFeed == null) {
+    alert("请填写完整并选择宝宝反馈");
+    return;
+  }
+  records.push({age, eatTime, food, type, feed: currentFeed});
+  localStorage.setItem('records', JSON.stringify(records));
+  checkUnlock();
   renderRecords();
-  document.getElementById('age').value='';
-  document.getElementById('food').value='';
+  document.getElementById('age').value = '';
+  document.getElementById('eatTime').value = '';
+  document.getElementById('food').value = '';
+  currentFeed = null;
+  document.querySelectorAll('.feedback button').forEach(b=>b.classList.remove('active'));
 }
 
-// 渲染记录
-function renderRecords(){
+function renderRecords() {
   const list = document.getElementById('recordList');
-  list.innerHTML = records.map(r=>`
+  list.innerHTML = records.map(r => `
   <tr>
     <td>${r.age}</td>
+    <td>${r.eatTime ? new Date(r.eatTime).toLocaleString() : '-'}</td>
     <td>${r.food}</td>
-    <td>${r.type}</td>
+    <td>${r.feed === 1 ? '😊' : '😢'}</td>
   </tr>
   `).join('');
 }
-</script>
 
+// 核心：连续3天吃得好 → 自动解锁下一个辅食
+function checkUnlock() {
+  const goodCount = records.slice(-3).filter(i => i.feed === 1).length;
+  if (goodCount >= 3) {
+    const idx = unlocked.findIndex((s, i) => i > 0 && !s);
+    if (idx !== -1 && !unlocked[idx]) {
+      unlocked[idx] = true;
+      localStorage.setItem('unlocked', JSON.stringify(unlocked));
+      renderFood();
+      document.getElementById('popup').style.display = 'flex';
+    }
+  }
+}
+
+function renderFood() {
+  document.querySelectorAll('.food').forEach((el, i) => {
+    if (unlocked[i]) {
+      el.classList.remove('locked');
+      el.querySelector('span').textContent = '🔓 已解锁';
+    } else {
+      el.classList.add('locked');
+      el.querySelector('span').textContent = '🔒 未解锁';
+    }
+  });
+}
+
+function closePopup() {
+  document.getElementById('popup').style.display = 'none';
+}
+
+function go(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(n => n.classList.remove('active'));
+  document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1)).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
 </body>
 </html>
