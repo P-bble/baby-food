@@ -3,84 +3,79 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>宝宝辅食</title>
+<title>宝宝辅食记录</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
-  body{background:#fff5f7}
-  .page{display:none;padding:20px;max-width:400px;margin:0 auto}
-  .page.active{display:block}
-  .title{font-size:24px;font-weight:bold;text-align:center;margin:20px 0;color:#ff69b4}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
-  .food{background:white;border-radius:16px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
-  .food h3{margin:10px 0;color:#333}
-  .food.locked{opacity:0.5}
-  .btn{background:#ff69b4;color:white;border:none;border-radius:14px;padding:12px;width:100%;margin-top:10px;font-weight:bold}
-  .nav{display:flex;gap:10px;margin-top:30px}
-  .nav button{flex:1;background:white;border:1px solid #ff69b4;color:#ff69b4;border-radius:12px;padding:12px}
-  .nav button.active{background:#ff69b4;color:white}
-  .popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);display:none;align-items:center;justify-content:center}
-  .popup-box{background:white;padding:30px;border-radius:20px;text-align:center;max-width:300px}
-  .popup-box h2{color:#ff69b4;margin-bottom:10px}
-  .popup-box p{margin-bottom:20px}
-  .record-table{width:100%;background:white;border-radius:16px;overflow:hidden;margin-top:20px}
-  .record-table table{width:100%;border-collapse:collapse}
-  .record-table th,.record-table td{padding:12px;text-align:left;border-bottom:1px solid #f0f0f0;font-size:14px}
-  .record-table th{background:#fff5f7;color:#ff69b4}
-  .form{background:white;border-radius:16px;padding:20px;margin-top:20px}
-  .form input,.form select{width:100%;padding:12px;margin-bottom:12px;border:1px solid #eee;border-radius:12px}
-  .feedback{display:flex;gap:10px;margin-bottom:12px}
-  .feedback button{flex:1;padding:10px;border-radius:12px;border:1px solid #eee;background:white}
-  .feedback button.active{background:#ff69b4;color:white}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
+body{background:#fff5f7}
+.page{display:none;padding:20px;max-width:400px;margin:0 auto}
+.page.active{display:block}
+.title{font-size:24px;font-weight:bold;text-align:center;margin:20px 0;color:#ff69b4}
+.tab-bar{display:flex;gap:0;border-bottom:1px solid #f0f0f0;margin-bottom:20px}
+.tab-bar button{flex:1;padding:12px;border:none;background:transparent;font-size:16px;color:#999;position:relative}
+.tab-bar button.active{color:#ff69b4;font-weight:bold}
+.tab-bar button.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:60%;height:3px;background:#ff69b4;border-radius:2px}
+.stat-header{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.stat-tag{background:#ff69b4;color:white;padding:8px 16px;border-radius:20px;font-weight:bold}
+.stat-period{color:#666;font-size:14px}
+.stat-table{background:white;border-radius:16px;padding:16px;margin-bottom:20px}
+.stat-row{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px;text-align:center}
+.stat-cell{font-size:14px;color:#333}
+.stat-label{font-size:13px;color:#999;margin-bottom:4px}
+.chart-container{background:white;border-radius:16px;padding:16px;margin-bottom:20px}
+.chart-title{font-size:16px;font-weight:bold;margin-bottom:12px;color:#333}
+.avg-tip{text-align:center;color:#ff69b4;font-weight:bold;margin:8px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
+.food{background:white;border-radius:16px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
+.food h3{margin:10px 0;color:#333;font-size:16px}
+.food.locked{opacity:0.5}
+.food span{font-size:12px}
+.btn{background:#ff69b4;color:white;border:none;border-radius:14px;padding:12px;width:100%;margin-top:10px;font-weight:bold}
+.nav{display:flex;gap:10px;margin-top:20px}
+.nav button{flex:1;background:white;border:1px solid #ff69b4;color:#ff69b4;border-radius:12px;padding:12px}
+.nav button.active{background:#ff69b4;color:white}
+.popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);display:none;align-items:center;justify-content:center}
+.popup-box{background:white;padding:30px;border-radius:20px;text-align:center;max-width:300px}
+.popup-box h2{color:#ff69b4}
+.record-table{width:100%;background:white;border-radius:16px;overflow:hidden;margin-top:16px}
+.record-table table{width:100%;border-collapse:collapse}
+.record-table th,.record-table td{padding:10px;text-align:left;border-bottom:1px solid #f0f0f0;font-size:13px}
+.record-table th{background:#fff5f7;color:#ff69b4}
+.form{background:white;border-radius:16px;padding:20px;margin-top:20px}
+.form input,.form select,.form textarea{width:100%;padding:12px;margin-bottom:12px;border:1px solid #eee;border-radius:12px}
+.feedback{display:flex;gap:10px;margin-bottom:12px}
+.feedback button{flex:1;padding:10px;border-radius:12px;border:1px solid #eee;background:white;font-size:18px}
+.feedback button.active{background:#ff69b4;color:white}
+#badNote{display:none;margin-bottom:12px}
 </style>
 </head>
+
 <body>
 
-<!-- 主页面：辅食图鉴（游戏化解锁） -->
-<div class="page active" id="pageMain">
-  <div class="title">🍼 宝宝辅食图鉴</div>
-  <div class="grid">
-    <div class="food" data-food="高铁米粉" data-index="0">
-      <h3>高铁米粉</h3>
-      <span>🔓 已解锁</span>
-    </div>
-    <div class="food locked" data-food="南瓜泥" data-index="1">
-      <h3>南瓜泥</h3>
-      <span>🔒 未解锁</span>
-    </div>
-    <div class="food locked" data-food="土豆泥" data-index="2">
-      <h3>土豆泥</h3>
-      <span>🔒 未解锁</span>
-    </div>
-    <div class="food locked" data-food="苹果泥" data-index="3">
-      <h3>苹果泥</h3>
-      <span>🔒 未解锁</span>
-    </div>
-  </div>
-  <div class="nav">
-    <button class="active" onclick="go('main')">辅食图鉴</button>
-    <button onclick="go('record')">辅食记录</button>
-  </div>
-</div>
-
-<!-- 记录页面：表格 -->
-<div class="page" id="pageRecord">
+<!-- 1. 记录页（默认首页） -->
+<div class="page active" id="pageRecord">
   <div class="title">📋 宝宝辅食记录</div>
   <div class="form">
     <input type="text" id="age" placeholder="宝宝月龄（如：7个月）">
-    <input type="datetime-local" id="eatTime">
+    <input type="datetime-local" id="eatTime" step="1">
     <input type="text" id="food" placeholder="辅食名称">
     <select id="type">
       <option>主食类</option>
       <option>蔬菜类</option>
       <option>水果类</option>
       <option>肉类</option>
+      <option>蛋类</option>
     </select>
+
     <div class="feedback">
-      <button id="good" onclick="setFeed(1)">😊 吃得好</button>
-      <button id="bad" onclick="setFeed(0)">😢 不喜欢</button>
+      <button id="good" onclick="setFeed(1)">😊</button>
+      <button id="bad" onclick="setFeed(0)">😢</button>
     </div>
+
+    <textarea id="badNote" placeholder="请填写情况：过敏、大便不好、不消化、哭闹等"></textarea>
     <button class="btn" onclick="addRecord()">添加记录</button>
   </div>
+
   <div class="record-table">
     <table>
       <thead>
@@ -88,109 +83,290 @@
           <th>月龄</th>
           <th>时间</th>
           <th>辅食</th>
-          <th>反馈</th>
+          <th>反应</th>
+          <th>备注</th>
         </tr>
       </thead>
       <tbody id="recordList"></tbody>
     </table>
   </div>
+
   <div class="nav">
-    <button onclick="go('main')">辅食图鉴</button>
     <button class="active" onclick="go('record')">辅食记录</button>
+    <button onclick="go('main')">辅食图鉴</button>
+    <button onclick="go('analysis')">喂养分析</button>
   </div>
 </div>
 
-<!-- 解锁成功弹窗 -->
+<!-- 2. 辅食图鉴页 -->
+<div class="page" id="pageMain">
+  <div class="title">🍼 辅食图鉴</div>
+  <div class="grid">
+    <div class="food" data-food="高铁米粉" data-index="0"><h3>高铁米粉</h3><span>🔓 已解锁</span></div>
+    <div class="food locked" data-food="南瓜泥" data-index="1"><h3>南瓜泥</h3><span>🔒 未解锁</span></div>
+    <div class="food locked" data-food="土豆泥" data-index="2"><h3>土豆泥</h3><span>🔒 未解锁</span></div>
+    <div class="food locked" data-food="苹果泥" data-index="3"><h3>苹果泥</h3><span>🔒 未解锁</span></div>
+    <div class="food locked" data-food="胡萝卜泥" data-index="4"><h3>胡萝卜泥</h3><span>🔒 未解锁</span></div>
+    <div class="food locked" data-food="西兰花泥" data-index="5"><h3>西兰花泥</h3><span>🔒 未解锁</span></div>
+    <div class="food locked" data-food="蛋黄泥" data-index="6"><h3>蛋黄泥</h3><span>🔒 未解锁</span></div>
+    <div class="food locked" data-food="猪肝泥" data-index="7"><h3>猪肝泥</h3><span>🔒 未解锁</span></div>
+  </div>
+  <div class="nav">
+    <button onclick="go('record')">辅食记录</button>
+    <button class="active" onclick="go('main')">辅食图鉴</button>
+    <button onclick="go('analysis')">喂养分析</button>
+  </div>
+</div>
+
+<!-- 3. 喂养分析页 -->
+<div class="page" id="pageAnalysis">
+  <div class="title">喂养分析</div>
+  <div class="tab-bar">
+    <button onclick="switchTab('喂奶')">喂奶</button>
+    <button onclick="switchTab('睡眠')">睡眠</button>
+    <button onclick="switchTab('换尿布')">换尿布</button>
+    <button class="active" onclick="switchTab('辅食')">辅食</button>
+    <button onclick="switchTab('全部')">全部</button>
+  </div>
+
+  <div class="stat-header">
+    <div class="stat-tag">辅食量</div>
+    <div class="stat-period">统计周期：每日00:00-24:00</div>
+  </div>
+
+  <div class="stat-table">
+    <div class="stat-row">
+      <div class="stat-cell"><div class="stat-label">3.20</div><div id="d1-count">0次</div></div>
+      <div class="stat-cell"><div class="stat-label">3.21</div><div id="d2-count">0次</div></div>
+      <div class="stat-cell"><div class="stat-label">3.22</div><div id="d3-count">0次</div></div>
+      <div class="stat-cell"><div class="stat-label">3.23</div><div id="d4-count">0次</div></div>
+      <div class="stat-cell"><div class="stat-label">3.24</div><div id="d5-count">0次</div></div>
+      <div class="stat-cell"><div class="stat-label">今天</div><div id="d6-count">0次</div></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-cell"><div class="stat-label">😊</div><div id="d1-good">0</div></div>
+      <div class="stat-cell"><div class="stat-label">😊</div><div id="d2-good">0</div></div>
+      <div class="stat-cell"><div class="stat-label">😊</div><div id="d3-good">0</div></div>
+      <div class="stat-cell"><div class="stat-label">😊</div><div id="d4-good">0</div></div>
+      <div class="stat-cell"><div class="stat-label">😊</div><div id="d5-good">0</div></div>
+      <div class="stat-cell"><div class="stat-label">😊</div><div id="d6-good">0</div></div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-cell"><div class="stat-label">😢</div><div id="d1-bad">0</div></div>
+      <div class="stat-cell"><div class="stat-label">😢</div><div id="d2-bad">0</div></div>
+      <div class="stat-cell"><div class="stat-label">😢</div><div id="d3-bad">0</div></div>
+      <div class="stat-cell"><div class="stat-label">😢</div><div id="d4-bad">0</div></div>
+      <div class="stat-cell"><div class="stat-label">😢</div><div id="d5-bad">0</div></div>
+      <div class="stat-cell"><div class="stat-label">😢</div><div id="d6-bad">0</div></div>
+    </div>
+  </div>
+
+  <div class="avg-tip" id="avgTip">近6天平均每天0次辅食</div>
+
+  <div class="chart-container">
+    <div class="chart-title">每日辅食次数</div>
+    <canvas id="stackChart"></canvas>
+  </div>
+
+  <div class="nav">
+    <button onclick="go('record')">辅食记录</button>
+    <button onclick="go('main')">辅食图鉴</button>
+    <button class="active" onclick="go('analysis')">喂养分析</button>
+  </div>
+</div>
+
+<!-- 解锁弹窗 -->
 <div class="popup" id="popup">
   <div class="popup-box">
     <h2>🎉 解锁成功！</h2>
-    <p id="popupText">宝宝连续3天爱吃，解锁新辅食！</p>
+    <p id="popupText"></p>
     <button class="btn" onclick="closePopup()">确定</button>
   </div>
 </div>
 
 <script>
-let unlocked = JSON.parse(localStorage.getItem('unlocked')) ?? [true, false, false, false];
+const foodList = [
+  "高铁米粉","南瓜泥","土豆泥","苹果泥",
+  "胡萝卜泥","西兰花泥","蛋黄泥","猪肝泥"
+];
+let unlocked = JSON.parse(localStorage.getItem('unlocked')) ?? [true,false,false,false,false,false,false,false];
 let records = JSON.parse(localStorage.getItem('records')) ?? [];
 let currentFeed = null;
-const foodList = ["高铁米粉","南瓜泥","土豆泥","苹果泥"];
+let stackChart = null;
 
-renderFood();
-renderRecords();
-
-function setFeed(type) {
-  currentFeed = type;
-  document.querySelectorAll('.feedback button').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
+window.onload = function(){
+  renderFood();
+  renderRecords();
+  updateAnalysis();
 }
 
-function addRecord() {
+// 选择表情
+function setFeed(t){
+  currentFeed = t;
+  document.querySelectorAll('.feedback button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  // 哭脸才显示备注
+  if(t === 0){
+    document.getElementById('badNote').style.display = 'block';
+  }else{
+    document.getElementById('badNote').style.display = 'none';
+    document.getElementById('badNote').value = '';
+  }
+}
+
+// 添加记录
+function addRecord(){
   const age = document.getElementById('age').value.trim();
   const eatTime = document.getElementById('eatTime').value;
   const food = document.getElementById('food').value.trim();
   const type = document.getElementById('type').value;
-  if (!age || !eatTime || !food || currentFeed == null) {
-    alert("请填写完整并选择宝宝反馈");
+  const note = document.getElementById('badNote').value.trim();
+
+  if(!age || !eatTime || !food || currentFeed == null) {
+    alert('请填写完整信息');
     return;
   }
-  records.push({age, eatTime, food, type, feed: currentFeed});
+  // 哭脸必须填备注
+  if(currentFeed === 0 && !note){
+    alert('请填写宝宝情况：过敏/大便不好/哭闹等');
+    return;
+  }
+
+  records.push({
+    age, eatTime, food, type,
+    feed: currentFeed,
+    note: note
+  });
+
   localStorage.setItem('records', JSON.stringify(records));
   checkUnlock();
   renderRecords();
+  updateAnalysis();
+
+  // 清空
   document.getElementById('age').value = '';
   document.getElementById('eatTime').value = '';
   document.getElementById('food').value = '';
+  document.getElementById('badNote').value = '';
+  document.getElementById('badNote').style.display = 'none';
   currentFeed = null;
   document.querySelectorAll('.feedback button').forEach(b=>b.classList.remove('active'));
 }
 
-function renderRecords() {
+// 渲染表格
+function renderRecords(){
   const list = document.getElementById('recordList');
-  list.innerHTML = records.map(r => `
+  list.innerHTML = records.map(r=>`
   <tr>
     <td>${r.age}</td>
-    <td>${r.eatTime ? new Date(r.eatTime).toLocaleString() : '-'}</td>
+    <td>${r.eatTime.replace('T',' ')}</td>
     <td>${r.food}</td>
     <td>${r.feed === 1 ? '😊' : '😢'}</td>
+    <td>${r.note || '-'}</td>
   </tr>
   `).join('');
 }
 
-// 核心：连续3天吃得好 → 自动解锁下一个辅食
-function checkUnlock() {
-  const goodCount = records.slice(-3).filter(i => i.feed === 1).length;
-  if (goodCount >= 3) {
-    const idx = unlocked.findIndex((s, i) => i > 0 && !s);
-    if (idx !== -1 && !unlocked[idx]) {
-      unlocked[idx] = true;
-      localStorage.setItem('unlocked', JSON.stringify(unlocked));
-      renderFood();
-      document.getElementById('popup').style.display = 'flex';
-    }
-  }
+// 连续3个笑脸解锁下一个辅食
+function checkUnlock(){
+  const last3 = records.slice(-3);
+  if(last3.length < 3) return;
+  const allGood = last3.every(i => i.feed === 1);
+  if(!allGood) return;
+
+  const idx = unlocked.findIndex((s,i) => i > 0 && !s);
+  if(idx === -1) return;
+
+  unlocked[idx] = true;
+  localStorage.setItem('unlocked', JSON.stringify(unlocked));
+  renderFood();
+  document.getElementById('popupText').innerText = `恭喜解锁：${foodList[idx]}`;
+  document.getElementById('popup').style.display = 'flex';
 }
 
-function renderFood() {
-  document.querySelectorAll('.food').forEach((el, i) => {
-    if (unlocked[i]) {
+function renderFood(){
+  document.querySelectorAll('.food').forEach((el,i)=>{
+    if(unlocked[i]){
       el.classList.remove('locked');
       el.querySelector('span').textContent = '🔓 已解锁';
-    } else {
+    }else{
       el.classList.add('locked');
       el.querySelector('span').textContent = '🔒 未解锁';
     }
   });
 }
 
-function closePopup() {
+function closePopup(){
   document.getElementById('popup').style.display = 'none';
 }
 
-function go(page) {
+// 页面切换
+function go(page){
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav button').forEach(n => n.classList.remove('active'));
-  document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1)).classList.add('active');
+  document.getElementById('page'+page.charAt(0).toUpperCase()+page.slice(1)).classList.add('active');
   event.target.classList.add('active');
+  if(page === 'analysis') updateAnalysis();
+}
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-bar button').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// 分析页统计
+function updateAnalysis(){
+  const dates = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    dates.push(d);
+  }
+
+  const dailyData = dates.map(d=>{
+    const dateStr = d.toISOString().split('T')[0];
+    const dayRecords = records.filter(r=>r.eatTime.startsWith(dateStr));
+    return {
+      count: dayRecords.length,
+      good: dayRecords.filter(r=>r.feed === 1).length,
+      bad: dayRecords.filter(r=>r.feed === 0).length,
+      date: d
+    };
+  });
+
+  const ids = ['d1','d2','d3','d4','d5','d6'];
+  dailyData.forEach((data,i)=>{
+    document.getElementById(`${ids[i]}-count`).textContent = `${data.count}次`;
+    document.getElementById(`${ids[i]}-good`).textContent = data.good;
+    document.getElementById(`${ids[i]}-bad`).textContent = data.bad;
+  });
+
+  const total = dailyData.reduce((sum,d)=>sum+d.count,0);
+  const avg = (total/6).toFixed(1);
+  document.getElementById('avgTip').textContent = `近6天平均每天${avg}次辅食`;
+
+  const ctx = document.getElementById('stackChart').getContext('2d');
+  const labels = dailyData.map(d=>`${d.getMonth()+1}.${d.getDate()}`);
+  const goodData = dailyData.map(d=>d.good);
+  const badData = dailyData.map(d=>d.bad);
+
+  if(stackChart) stackChart.destroy();
+  stackChart = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels: labels,
+      datasets:[
+        { label:'😊', data: goodData, backgroundColor:'#ff69b4', borderRadius:8 },
+        { label:'😢', data: badData, backgroundColor:'#ff9a76', borderRadius:8 }
+      ]
+    },
+    options:{
+      responsive:true,
+      scales:{ x:{stacked:true}, y:{stacked:true,beginAtZero:true} },
+      plugins:{ legend:{position:'bottom'} }
+    }
+  });
 }
 </script>
 </body>
