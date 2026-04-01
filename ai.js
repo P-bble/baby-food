@@ -1,16 +1,12 @@
 // ================= 直接复制这里 =================
 const CONFIG = {
-    // 你的火山引擎 API Key (TK 开头的那串)
+    // 👇👇 只改这里！！！
     VOLC_API_KEY: "8d9c3a7c-7cf8-47e5-ae51-cbd66d25d22c",
-    
-    // 你的模型 ID（截图里确认过，不用改）
+
     MODEL_ID: "doubao-1-5-lite-32k-250115",
-    
-    // 火山引擎接口地址
     API_URL: "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
 };
 
-// 等待页面加载完再初始化
 document.addEventListener('DOMContentLoaded', function() {
     initApp();
 });
@@ -39,14 +35,12 @@ async function getRecommendation() {
         return;
     }
 
-    // 构造提问
     const promptText = `给${age}宝宝做${category}的辅食，推荐具体食谱，包含食材、详细做法、营养亮点，并附上相关抖音视频链接。`;
 
     const resultDiv = document.querySelector('.result-box') || document.createElement('div');
     resultDiv.className = 'result-box';
     resultDiv.innerHTML = "<p>正在连接AI...</p>";
     
-    // 如果结果框不存在，添加到页面
     const buttonContainer = document.querySelector('.button-container') || document.querySelector('.pink-button').parentElement;
     if (!document.querySelector('.result-box')) {
         buttonContainer.after(resultDiv);
@@ -57,7 +51,7 @@ async function getRecommendation() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-Api-Key': CONFIG.VOLC_API_KEY // 新密钥必须用这个头
+                'X-Api-Key': CONFIG.VOLC_API_KEY
             },
             body: JSON.stringify({
                 model: CONFIG.MODEL_ID,
