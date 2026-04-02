@@ -2,63 +2,325 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- 核心：手机适配viewport（必加） -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>宝宝辅食记录</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif}
-body{background:#fff5f7}
-.page{display:none;padding:20px;max-width:400px;margin:0 auto}
-.page.active{display:block}
-.title{font-size:24px;font-weight:bold;text-align:center;margin:20px 0;color:#ff69b4}
-.tab-bar{display:flex;gap:0;border-bottom:1px solid #f0f0f0;margin-bottom:20px}
-.tab-bar button{flex:1;padding:12px;border:none;background:transparent;font-size:16px;color:#999;position:relative}
-.tab-bar button.active{color:#ff69b4;font-weight:bold}
-.tab-bar button.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:60%;height:3px;background:#ff69b4;border-radius:2px}
-.stat-header{display:flex;align-items:center;gap:10px;margin-bottom:20px}
-.stat-tag{background:#ff69b4;color:white;padding:8px 16px;border-radius:20px;font-weight:bold}
-.stat-period{color:#666;font-size:14px}
-.stat-table{background:white;border-radius:16px;padding:16px;margin-bottom:20px}
-.stat-row{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px;text-align:center}
-.stat-cell{font-size:14px;color:#333}
-.stat-label{font-size:13px;color:#999;margin-bottom:4px}
-.chart-container{background:white;border-radius:16px;padding:16px;margin-bottom:20px}
-.chart-title{font-size:16px;font-weight:bold;margin-bottom:12px;color:#333}
-.avg-tip{text-align:center;color:#ff69b4;font-weight:bold;margin:8px 0}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px}
-.food{background:white;border-radius:16px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
-.food h3{margin:10px 0;color:#333;font-size:16px}
-.food.locked{opacity:0.5}
-.food span{font-size:12px}
-.btn{background:#ff69b4;color:white;border:none;border-radius:14px;padding:12px;width:100%;margin-top:10px;font-weight:bold}
-.nav{display:flex;gap:10px;margin-top:20px}
-.nav button{flex:1;background:white;border:1px solid #ff69b4;color:#ff69b4;border-radius:12px;padding:12px}
-.nav button.active{background:#ff69b4;color:white}
-.popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);display:none;align-items:center;justify-content:center}
-.popup-box{background:white;padding:30px;border-radius:20px;text-align:center;max-width:300px}
-.popup-box h2{color:#ff69b4}
-.record-table{width:100%;background:white;border-radius:16px;overflow:hidden;margin-top:16px}
-.record-table table{width:100%;border-collapse:collapse}
-.record-table th,.record-table td{padding:10px;text-align:left;border-bottom:1px solid #f0f0f0;font-size:13px}
-.record-table th{background:#fff5f7;color:#ff69b4}
-.form{background:white;border-radius:16px;padding:20px;margin-top:20px}
-.form input,.form select,.form textarea{width:100%;padding:12px;margin-bottom:12px;border:1px solid #eee;border-radius:12px}
-.feedback{display:flex;gap:10px;margin-bottom:12px}
-.feedback button{flex:1;padding:10px;border-radius:12px;border:1px solid #eee;background:white;font-size:18px}
-.feedback button.active{background:#ff69b4;color:white}
-#badNote{display:none;margin-bottom:12px}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
+  /* 移动端优化：禁止长按选中、字体平滑 */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body {
+  width: 100%;
+  overflow-x: hidden; /* 禁止横向滚动 */
+  background: #fff5f7;
+}
+
+.page {
+  display: none;
+  padding: 16px;
+  width: 100%;
+  max-width: 480px; /* 手机最大宽度 */
+  margin: 0 auto;
+  min-height: 100vh;
+}
+.page.active {
+  display: block;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  margin: 16px 0 20px;
+  color: #ff69b4;
+}
+
+/* 隐藏不需要的标签 */
+.tab-bar {
+  display: none;
+}
+
+.stat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.stat-tag {
+  background: #ff69b4;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+.stat-period {
+  color: #666;
+  font-size: 12px;
+}
+
+.stat-table {
+  background: white;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 16px;
+  overflow-x: auto; /* 小屏允许横向滑动表格 */
+}
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+  text-align: center;
+  min-width: 320px;
+}
+.stat-cell {
+  font-size: 13px;
+  color: #333;
+}
+.stat-label {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.chart-container {
+  background: white;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.chart-title {
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #333;
+}
+.avg-tip {
+  text-align: center;
+  color: #ff69b4;
+  font-weight: bold;
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+/* 辅食图鉴（手机自适应网格） */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+.food {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.food h3 {
+  margin: 8px 0;
+  color: #333;
+  font-size: 15px;
+}
+.food.locked {
+  opacity: 0.5;
+}
+.food span {
+  font-size: 12px;
+}
+
+.btn {
+  background: #ff69b4;
+  color: white;
+  border: none;
+  border-radius: 14px;
+  padding: 14px;
+  width: 100%;
+  margin-top: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* 底部导航（手机友好） */
+.nav {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  position: sticky;
+  bottom: 0;
+  background: #fff5f7;
+  padding: 8px 0;
+}
+.nav button {
+  flex: 1;
+  background: white;
+  border: 1px solid #ff69b4;
+  color: #ff69b4;
+  border-radius: 12px;
+  padding: 12px 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.nav button.active {
+  background: #ff69b4;
+  color: white;
+}
+
+/* 弹窗（全屏居中） */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.popup-box {
+  background: white;
+  padding: 24px;
+  border-radius: 20px;
+  text-align: center;
+  width: 90%;
+  max-width: 320px;
+}
+.popup-box h2 {
+  color: #ff69b4;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+/* 记录表格（手机适配，文字自动换行） */
+.record-table {
+  width: 100%;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-top: 16px;
+  font-size: 13px;
+}
+.record-table table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+.record-table th,
+.record-table td {
+  padding: 10px 6px;
+  text-align: left;
+  border-bottom: 1px solid #f0f0f0;
+  word-wrap: break-word;
+  vertical-align: top;
+}
+.record-table th {
+  background: #fff5f7;
+  color: #ff69b4;
+  font-weight: bold;
+}
+.record-table td button {
+  padding: 4px 8px;
+  font-size: 12px;
+  background: #ff69b4;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* 表单（手机输入舒适） */
+.form {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+  margin-top: 16px;
+}
+.form input,
+.form select,
+.form textarea {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  font-size: 16px;
+  background: white;
+}
+.form textarea {
+  min-height: 80px;
+  resize: none;
+}
+
+.feedback {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.feedback button {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #eee;
+  background: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+.feedback button.active {
+  background: #ff69b4;
+  color: white;
+}
+
+#badNote {
+  display: none;
+  margin-bottom: 12px;
+}
+
+/* 辅食联想下拉 */
+.suggest {
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: -12px;
+  margin-bottom: 12px;
+  max-height: 150px;
+  overflow-y: auto;
+  font-size: 15px;
+}
+.suggest div {
+  padding: 12px 14px;
+  cursor: pointer;
+}
+.suggest div:hover {
+  background: #fef5f8;
+}
 </style>
 </head>
 
 <body>
 
-<!-- 1. 记录页（默认首页） -->
+<!-- 1. 记录页（首页） -->
 <div class="page active" id="pageRecord">
   <div class="title">📋 宝宝辅食记录</div>
   <div class="form">
     <input type="text" id="age" placeholder="宝宝月龄（如：7个月）">
     <input type="datetime-local" id="eatTime" step="1">
-    <input type="text" id="food" placeholder="辅食名称">
+    <input type="text" id="food" placeholder="输入辅食名称" oninput="showSuggest()">
+    <div class="suggest" id="suggestBox" style="display:none"></div>
     <select id="type">
       <option>主食类</option>
       <option>蔬菜类</option>
@@ -72,7 +334,7 @@ body{background:#fff5f7}
       <button id="bad" onclick="setFeed(0)">😢</button>
     </div>
 
-    <textarea id="badNote" placeholder="请填写情况：过敏、大便不好、不消化、哭闹等"></textarea>
+    <textarea id="badNote" placeholder="备注：过敏、起疹、大便异常等（可选）"></textarea>
     <button class="btn" onclick="addRecord()">添加记录</button>
   </div>
 
@@ -85,6 +347,7 @@ body{background:#fff5f7}
           <th>辅食</th>
           <th>反应</th>
           <th>备注</th>
+          <th>补充</th>
         </tr>
       </thead>
       <tbody id="recordList"></tbody>
@@ -98,19 +361,10 @@ body{background:#fff5f7}
   </div>
 </div>
 
-<!-- 2. 辅食图鉴页 -->
+<!-- 2. 辅食图鉴 -->
 <div class="page" id="pageMain">
-  <div class="title">🍼 辅食图鉴</div>
-  <div class="grid">
-    <div class="food" data-food="高铁米粉" data-index="0"><h3>高铁米粉</h3><span>🔓 已解锁</span></div>
-    <div class="food locked" data-food="南瓜泥" data-index="1"><h3>南瓜泥</h3><span>🔒 未解锁</span></div>
-    <div class="food locked" data-food="土豆泥" data-index="2"><h3>土豆泥</h3><span>🔒 未解锁</span></div>
-    <div class="food locked" data-food="苹果泥" data-index="3"><h3>苹果泥</h3><span>🔒 未解锁</span></div>
-    <div class="food locked" data-food="胡萝卜泥" data-index="4"><h3>胡萝卜泥</h3><span>🔒 未解锁</span></div>
-    <div class="food locked" data-food="西兰花泥" data-index="5"><h3>西兰花泥</h3><span>🔒 未解锁</span></div>
-    <div class="food locked" data-food="蛋黄泥" data-index="6"><h3>蛋黄泥</h3><span>🔒 未解锁</span></div>
-    <div class="food locked" data-food="猪肝泥" data-index="7"><h3>猪肝泥</h3><span>🔒 未解锁</span></div>
-  </div>
+  <div class="title">🍼 我的辅食图鉴</div>
+  <div class="grid" id="foodGrid"></div>
   <div class="nav">
     <button onclick="go('record')">辅食记录</button>
     <button class="active" onclick="go('main')">辅食图鉴</button>
@@ -118,29 +372,21 @@ body{background:#fff5f7}
   </div>
 </div>
 
-<!-- 3. 喂养分析页 -->
+<!-- 3. 喂养分析 -->
 <div class="page" id="pageAnalysis">
   <div class="title">喂养分析</div>
-  <div class="tab-bar">
-    <button onclick="switchTab('喂奶')">喂奶</button>
-    <button onclick="switchTab('睡眠')">睡眠</button>
-    <button onclick="switchTab('换尿布')">换尿布</button>
-    <button class="active" onclick="switchTab('辅食')">辅食</button>
-    <button onclick="switchTab('全部')">全部</button>
-  </div>
-
   <div class="stat-header">
     <div class="stat-tag">辅食量</div>
-    <div class="stat-period">统计周期：每日00:00-24:00</div>
+    <div class="stat-period">每日 00:00-24:00 统计</div>
   </div>
 
   <div class="stat-table">
     <div class="stat-row">
-      <div class="stat-cell"><div class="stat-label">3.20</div><div id="d1-count">0次</div></div>
-      <div class="stat-cell"><div class="stat-label">3.21</div><div id="d2-count">0次</div></div>
-      <div class="stat-cell"><div class="stat-label">3.22</div><div id="d3-count">0次</div></div>
-      <div class="stat-cell"><div class="stat-label">3.23</div><div id="d4-count">0次</div></div>
-      <div class="stat-cell"><div class="stat-label">3.24</div><div id="d5-count">0次</div></div>
+      <div class="stat-cell"><div class="stat-label">5.29</div><div id="d1-count">0次</div></div>
+      <div class="stat-cell"><div class="stat-label">5.30</div><div id="d2-count">0次</div></div>
+      <div class="stat-cell"><div class="stat-label">5.31</div><div id="d3-count">0次</div></div>
+      <div class="stat-cell"><div class="stat-label">6.01</div><div id="d4-count">0次</div></div>
+      <div class="stat-cell"><div class="stat-label">6.02</div><div id="d5-count">0次</div></div>
       <div class="stat-cell"><div class="stat-label">今天</div><div id="d6-count">0次</div></div>
     </div>
     <div class="stat-row">
@@ -178,25 +424,30 @@ body{background:#fff5f7}
 <!-- 解锁弹窗 -->
 <div class="popup" id="popup">
   <div class="popup-box">
-    <h2>🎉 解锁成功！</h2>
+    <h2>🎉 解锁新辅食！</h2>
     <p id="popupText"></p>
     <button class="btn" onclick="closePopup()">确定</button>
   </div>
 </div>
 
+<!-- 补充备注弹窗 -->
+<div class="popup" id="notePopup">
+  <div class="popup-box">
+    <h2>补充备注</h2>
+    <textarea id="editNote" style="min-height:80px;margin-bottom:12px" placeholder="请输入备注"></textarea>
+    <button class="btn" onclick="saveEditNote()">保存</button>
+  </div>
+</div>
+
 <script>
-const foodList = [
-  "高铁米粉","南瓜泥","土豆泥","苹果泥",
-  "胡萝卜泥","西兰花泥","蛋黄泥","猪肝泥"
-];
-let unlocked = JSON.parse(localStorage.getItem('unlocked')) ?? [true,false,false,false,false,false,false,false];
 let records = JSON.parse(localStorage.getItem('records')) ?? [];
 let currentFeed = null;
+let editingIndex = -1;
 let stackChart = null;
 
 window.onload = function(){
-  renderFood();
   renderRecords();
+  renderFoodCollection();
   updateAnalysis();
 }
 
@@ -205,14 +456,31 @@ function setFeed(t){
   currentFeed = t;
   document.querySelectorAll('.feedback button').forEach(b=>b.classList.remove('active'));
   event.target.classList.add('active');
-  
-  // 哭脸才显示备注
   if(t === 0){
     document.getElementById('badNote').style.display = 'block';
   }else{
     document.getElementById('badNote').style.display = 'none';
     document.getElementById('badNote').value = '';
   }
+}
+
+// 辅食联想
+function showSuggest(){
+  const val = document.getElementById('food').value.trim().toLowerCase();
+  const box = document.getElementById('suggestBox');
+  if(!val){ box.style.display='none'; return; }
+  
+  const allFoods = [...new Set(records.map(r=>r.food))];
+  const list = allFoods.filter(f=>f.toLowerCase().includes(val));
+  if(list.length===0){ box.style.display='none'; return; }
+  
+  box.innerHTML = list.map(f=>`<div onclick="pickFood('${f.replace(/'/g,"")}')">${f}</div>`).join('');
+  box.style.display='block';
+}
+
+function pickFood(f){
+  document.getElementById('food').value = f;
+  document.getElementById('suggestBox').style.display='none';
 }
 
 // 添加记录
@@ -224,24 +492,16 @@ function addRecord(){
   const note = document.getElementById('badNote').value.trim();
 
   if(!age || !eatTime || !food || currentFeed == null) {
-    alert('请填写完整信息');
-    return;
-  }
-  // 哭脸必须填备注
-  if(currentFeed === 0 && !note){
-    alert('请填写宝宝情况：过敏/大便不好/哭闹等');
+    alert('请填写月龄、时间、辅食、反应');
     return;
   }
 
-  records.push({
-    age, eatTime, food, type,
-    feed: currentFeed,
-    note: note
-  });
-
+  records.push({ age, eatTime, food, type, feed: currentFeed, note });
   localStorage.setItem('records', JSON.stringify(records));
-  checkUnlock();
+
+  checkNewFoodUnlock(food);
   renderRecords();
+  renderFoodCollection();
   updateAnalysis();
 
   // 清空
@@ -252,70 +512,83 @@ function addRecord(){
   document.getElementById('badNote').style.display = 'none';
   currentFeed = null;
   document.querySelectorAll('.feedback button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('suggestBox').style.display='none';
 }
 
-// 渲染表格
+// 渲染记录
 function renderRecords(){
   const list = document.getElementById('recordList');
-  list.innerHTML = records.map(r=>`
+  list.innerHTML = records.map((r,i)=>`
   <tr>
     <td>${r.age}</td>
     <td>${r.eatTime.replace('T',' ')}</td>
     <td>${r.food}</td>
     <td>${r.feed === 1 ? '😊' : '😢'}</td>
     <td>${r.note || '-'}</td>
+    <td><button onclick="openNotePopup(${i})">编辑</button></td>
   </tr>
   `).join('');
 }
 
-// 连续3个笑脸解锁下一个辅食
-function checkUnlock(){
-  const last3 = records.slice(-3);
-  if(last3.length < 3) return;
-  const allGood = last3.every(i => i.feed === 1);
-  if(!allGood) return;
-
-  const idx = unlocked.findIndex((s,i) => i > 0 && !s);
-  if(idx === -1) return;
-
-  unlocked[idx] = true;
-  localStorage.setItem('unlocked', JSON.stringify(unlocked));
-  renderFood();
-  document.getElementById('popupText').innerText = `恭喜解锁：${foodList[idx]}`;
-  document.getElementById('popup').style.display = 'flex';
+// 补充备注
+function openNotePopup(index){
+  editingIndex = index;
+  document.getElementById('editNote').value = records[index].note || '';
+  document.getElementById('notePopup').style.display = 'flex';
 }
 
-function renderFood(){
-  document.querySelectorAll('.food').forEach((el,i)=>{
-    if(unlocked[i]){
-      el.classList.remove('locked');
-      el.querySelector('span').textContent = '🔓 已解锁';
-    }else{
-      el.classList.add('locked');
-      el.querySelector('span').textContent = '🔒 未解锁';
-    }
-  });
+function saveEditNote(){
+  if(editingIndex === -1) return;
+  records[editingIndex].note = document.getElementById('editNote').value.trim();
+  localStorage.setItem('records', JSON.stringify(records));
+  renderRecords();
+  updateAnalysis();
+  closeNotePopup();
 }
 
-function closePopup(){
-  document.getElementById('popup').style.display = 'none';
+function closeNotePopup(){
+  document.getElementById('notePopup').style.display = 'none';
+  editingIndex = -1;
+}
+
+// 解锁新辅食
+function checkNewFoodUnlock(foodName){
+  const collection = JSON.parse(localStorage.getItem('foodCollection')) ?? [];
+  const exists = collection.some(item => item.name === foodName);
+  if(!exists){
+    collection.push({ name: foodName, unlocked: true });
+    localStorage.setItem('foodCollection', JSON.stringify(collection));
+    document.getElementById('popupText').innerText = `成功解锁：${foodName}`;
+    document.getElementById('popup').style.display = 'flex';
+  }
+}
+
+// 渲染图鉴
+function renderFoodCollection(){
+  const collection = JSON.parse(localStorage.getItem('foodCollection')) ?? [];
+  const grid = document.getElementById('foodGrid');
+  if(collection.length === 0){
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无解锁辅食</div>';
+    return;
+  }
+  grid.innerHTML = collection.map((item,i)=>`
+    <div class="food" data-food="${item.name}" data-index="${i}">
+      <h3>${item.name}</h3>
+      <span>🔓 已解锁</span>
+    </div>
+  `).join('');
 }
 
 // 页面切换
 function go(page){
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav button').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(n=>n.classList.remove('active'));
   document.getElementById('page'+page.charAt(0).toUpperCase()+page.slice(1)).classList.add('active');
   event.target.classList.add('active');
   if(page === 'analysis') updateAnalysis();
 }
 
-function switchTab(tab){
-  document.querySelectorAll('.tab-bar button').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
-}
-
-// 分析页统计
+// 分析页
 function updateAnalysis(){
   const dates = [];
   for(let i=5;i>=0;i--){
@@ -363,10 +636,15 @@ function updateAnalysis(){
     },
     options:{
       responsive:true,
+      maintainAspectRatio: false,
       scales:{ x:{stacked:true}, y:{stacked:true,beginAtZero:true} },
       plugins:{ legend:{position:'bottom'} }
     }
   });
+}
+
+function closePopup(){
+  document.getElementById('popup').style.display = 'none';
 }
 </script>
 </body>
