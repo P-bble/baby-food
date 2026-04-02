@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>宝宝辅食记录</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
 html,body{width:100%;overflow-x:hidden;background:#fff5f7}
@@ -53,8 +52,8 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
 <div class="page active" id="pageBaby">
   <div class="title">👶 宝宝信息</div>
   <div class="form">
-    <input type="text" id="babyId" placeholder="请输入宝宝ID（家人同步用）">
-    <input type="date" id="babyBirth">
+    <input type="text" id="babyId" placeholder="请输入宝宝ID（用于家人同步）">
+    <input type="date" id="babyBirth" placeholder="请输入宝宝生日">
     <div style="color:#ff69b4;margin:10px 0" id="babyMonth"></div>
     <button class="btn" onclick="saveBaby()">进入辅食记录</button>
   </div>
@@ -186,23 +185,37 @@ let currentFeed = null;
 let editIndex = -1;
 let chart = null;
 
-window.onload=()=>{loadBaby();renderRecords();renderCollection();analysis();}
+window.onload=()=>{
+    loadBaby();
+    renderRecords();
+    renderCollection();
+    analysis();
+}
 
 // 宝宝信息 + 精确月龄
 function saveBaby(){
   const id=document.getElementById('babyId').value;
   const birth=document.getElementById('babyBirth').value;
-  if(!id||!birth)return alert('请填写完整');
-  baby={id,birth};localStorage.setItem('baby',JSON.stringify(baby));
-  loadBaby();go('record');
+  if(!id||!birth)return alert('请填写宝宝ID和生日');
+  baby={id,birth};
+  localStorage.setItem('baby',JSON.stringify(baby));
+  loadBaby();
+  go('record');
 }
+
 function loadBaby(){
-  if(!baby.birth){document.getElementById('age').value='';return}
+  if(!baby.birth){
+    document.getElementById('age').value='';
+    return;
+  }
   const b=new Date(baby.birth);
   const now=new Date();
   let m=(now.getFullYear()-b.getFullYear())*12 + (now.getMonth()-b.getMonth());
   let d=now.getDate()-b.getDate();
-  if(d<0){m--;d+=new Date(b.getFullYear(),b.getMonth()+1,0).getDate()}
+  if(d<0){
+    m--;
+    d+=new Date(b.getFullYear(),b.getMonth()+1,0).getDate();
+  }
   const text=`${m}月龄${d}天`;
   document.getElementById('babyMonth').innerText=text;
   document.getElementById('age').value=text;
@@ -213,14 +226,14 @@ function go(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
   document.getElementById('page'+p.charAt(0).toUpperCase()+p.slice(1)).classList.add('active');
-  event.target.classList.add('active');
+  if(event) event.target.classList.add('active');
   if(p=='analysis')analysis();
 }
 
 // 表情
 function setFeed(t){
   currentFeed=t;
-  document.querySelectorAll('.feedback button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#pageRecord .feedback button').forEach(b=>b.classList.remove('active'));
   event.target.classList.add('active');
   document.getElementById('badNote').style.display=t==0?'block':'none';
 }
@@ -235,7 +248,10 @@ function showSuggest(){
   box.innerHTML=list.map(x=>`<div onclick="pick('${x}')">${x}</div>`).join('');
   box.style.display='block';
 }
-function pick(v){document.getElementById('food').value=v;document.getElementById('suggestBox').style.display='none'}
+function pick(v){
+  document.getElementById('food').value=v;
+  document.getElementById('suggestBox').style.display='none';
+}
 
 // 添加记录
 function addRecord(){
@@ -244,21 +260,28 @@ function addRecord(){
   const time=document.getElementById('eatTime').value;
   const food=document.getElementById('food').value;
   const note=document.getElementById('badNote').value;
-  if(!age||!time||!food||currentFeed==null)return alert('请填写完整');
+
+  if(!age || !time || !food || currentFeed == null){
+    alert('请填写完整：月龄、时间、辅食、表情');
+    return;
+  }
+
   records.push({age,time,food,feed:currentFeed,note});
-  save();
+  localStorage.setItem('records',JSON.stringify(records));
+
   checkUnlock();
   renderRecords();
   analysis();
   clearForm();
 }
+
 function clearForm(){
   document.getElementById('eatTime').value='';
   document.getElementById('food').value='';
   document.getElementById('badNote').value='';
   document.getElementById('badNote').style.display='none';
   currentFeed=null;
-  document.querySelectorAll('.feedback button').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('#pageRecord .feedback button').forEach(b=>b.classList.remove('active'));
 }
 
 // 渲染记录
@@ -278,24 +301,36 @@ function renderRecords(){
 
 // 编辑
 function edit(i){
-  editIndex=i;const r=records[i];
+  editIndex=i;
+  const r=records[i];
   document.getElementById('editTime').value=r.time;
   document.getElementById('editFood').value=r.food;
   document.getElementById('editNote').value=r.note||'';
   document.querySelectorAll('#editPopup .feedback button').forEach(b=>b.classList.remove('active'));
-  document.getElementById(r.feed==1?'eGood':'eBad').classList.add('active');
+  if(r.feed == 1){
+    document.getElementById('eGood').classList.add('active');
+  }else{
+    document.getElementById('eBad').classList.add('active');
+  }
   document.getElementById('editPopup').style.display='flex';
 }
-function closeEdit(){document.getElementById('editPopup').style.display='none';editIndex=-1}
+function closeEdit(){
+  document.getElementById('editPopup').style.display='none';
+  editIndex=-1;
+}
 function saveEdit(){
-  if(editIndex==-1)return;
+  if(editIndex === -1) return;
   const f=document.getElementById('editFood').value;
   const t=document.getElementById('editTime').value;
   const n=document.getElementById('editNote').value;
-  const feed=document.getElementById('eGood').classList.contains('active')?1:0;
-  if(!f||!t)return alert('不能为空');
-  records[editIndex]={...records[editIndex],food:f,time:t,feed:feed,note:n};
-  save();renderRecords();analysis();closeEdit();
+  const feed = document.getElementById('eGood').classList.contains('active') ? 1 : 0;
+  if(!f || !t) return alert('不能为空');
+
+  records[editIndex] = {...records[editIndex], food:f, time:t, feed:feed, note:n};
+  localStorage.setItem('records', JSON.stringify(records));
+  renderRecords();
+  analysis();
+  closeEdit();
 }
 
 // 连续3个笑脸解锁新辅食
@@ -312,16 +347,24 @@ function checkUnlock(){
   document.getElementById('unlockPopup').style.display='flex';
   renderCollection();
 }
+
 function renderCollection(){
   const g=document.getElementById('foodGrid');
-  if(!collection.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无解锁</div>';return}
+  if(!collection.length){
+    g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无解锁</div>';
+    return;
+  }
   g.innerHTML=collection.map(i=>`<div class="food"><h3>${i.name}</h3><span>已解锁</span></div>`).join('');
 }
 
 // 分析
 function analysis(){
   const days=[];
-  for(let i=5;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(d)}
+  for(let i=5;i>=0;i--){
+    const d=new Date();
+    d.setDate(d.getDate()-i);
+    days.push(d);
+  }
   const data=days.map(day=>{
     const pre=day.toISOString().split('T')[0];
     const list=records.filter(r=>r.time.startsWith(pre));
@@ -353,8 +396,9 @@ function analysis(){
   });
 }
 
-function save(){localStorage.setItem('records',JSON.stringify(records))}
-function closeUnlock(){document.getElementById('unlockPopup').style.display='none'}
+function closeUnlock(){
+  document.getElementById('unlockPopup').style.display='none';
+}
 </script>
 </body>
 </html>
