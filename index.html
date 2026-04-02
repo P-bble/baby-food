@@ -15,7 +15,7 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
 .grayBtn{background:#ccc;color:white}
 .avatar{width:70px;height:70px;border-radius:50%;object-fit:cover;margin:10px auto;display:block;border:3px solid #ff69b4}
 .avatarInput{display:none}
-.avatarLabel{text-align:center;color:#ff69b4;font-size:14px;display:block;margin:5px 0}
+.avatarLabel{text-align:center;color:#ff69b4;font-size:14px;display:block;margin:5px 0;cursor:pointer}
 .babyInfoBar{display:flex;align-items:center;gap:10px;padding:10px;background:white;border-radius:16px;margin-bottom:16px}
 .babyInfoBar img{width:50px;height:50px;border-radius:50%}
 .babyInfoBar .info{flex:1}
@@ -54,7 +54,7 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
 </head>
 <body>
 
-<!-- 0.宝宝信息页 -->
+<!-- 0.宝宝信息页（已修复保存）-->
 <div class="page active" id="pageBaby">
   <div class="title">👶宝宝信息</div>
   <img id="avatarPreview" class="avatar" src="https://picsum.photos/200/200">
@@ -78,13 +78,13 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
   </div>
 </div>
 
-<!-- 1.记录页 -->
+<!-- 1.记录页（新增克数） -->
 <div class="page" id="pageRecord">
   <div class="babyInfoBar">
-    <img id="barAvatar">
+    <img id="barAvatar1">
     <div class="info">
-      <div class="name" id="barMonth"></div>
-      <div class="id" id="barId"></div>
+      <div class="name" id="barMonth1"></div>
+      <div class="id" id="barId1"></div>
     </div>
   </div>
   <div class="title">📋辅食记录</div>
@@ -93,6 +93,7 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
     <input type="datetime-local" id="eatTime" step="1">
     <input type="text" id="food" placeholder="输入辅食名称" oninput="showSuggest()">
     <div class="suggest" id="suggestBox" style="display:none"></div>
+    <input type="number" id="gram" placeholder="本次喂养份量（克，选填）">
     <select id="type">
       <option>主食类</option><option>蔬菜类</option><option>水果类</option><option>肉类</option><option>蛋类</option>
     </select>
@@ -106,7 +107,7 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
   <div class="record-table">
     <table>
       <thead>
-        <tr><th>月龄</th><th>时间</th><th>辅食</th><th>反应</th><th>备注</th><th>操作</th></tr>
+        <tr><th>月龄</th><th>时间</th><th>辅食</th><th>克数</th><th>反应</th><th>备注</th><th>操作</th></tr>
       </thead>
       <tbody id="recordList"></tbody>
     </table>
@@ -144,7 +145,7 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
   </div>
 </div>
 
-<!-- 3.喂养分析页 -->
+<!-- 3.喂养分析（堆叠图 + 显示辅食名） -->
 <div class="page" id="pageAnalysis">
   <div class="babyInfoBar">
     <img id="barAvatar3">
@@ -154,18 +155,17 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
     </div>
   </div>
   <div class="title">📊喂养分析</div>
+  
   <div class="chart-box">
-    <h4>近6天辅食次数趋势</h4>
-    <canvas height="180" id="chartDays"></canvas>
+    <h4>每日辅食记录（堆叠图）</h4>
+    <canvas height="220" id="stackChart"></canvas>
   </div>
+
   <div class="chart-box">
-    <h4>接受度统计（喜欢/不适应）</h4>
+    <h4>接受度统计</h4>
     <canvas height="180" id="chartAccept"></canvas>
   </div>
-  <div class="chart-box">
-    <h4>辅食种类分布</h4>
-    <canvas height="180" id="chartType"></canvas>
-  </div>
+
   <div class="avg-tip" id="sumInfo"></div>
 
   <button class="shareBtn" onclick="shareData()">📤分享给家人</button>
@@ -184,6 +184,7 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
     <h3 style="margin-bottom:12px">编辑记录</h3>
     <input type="datetime-local" id="editTime" step="1"><br>
     <input type="text" id="editFood" placeholder="辅食名称"><br>
+    <input type="number" id="editGram" placeholder="克数"><br>
     <div class="feedback" style="margin:10px 0">
       <button id="eGood">😊</button>
       <button id="eBad">😢</button>
@@ -207,7 +208,9 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
 
 <script>
 let records = JSON.parse(localStorage.getItem('records')) || [];
-let baby = JSON.parse(localStorage.getItem('baby')) || {id:'', birth:'', avatar:'https://picsum.photos/200/200'};
+let baby = JSON.parse(localStorage.getItem('baby')) || {
+  id:'', birth:'', avatar:'https://picsum.photos/200/200'
+};
 let collection = JSON.parse(localStorage.getItem('foodCollection')) || [];
 let currentFeed = null;
 let editIndex = -1;
@@ -220,21 +223,21 @@ window.onload = () => {
   refreshAllChart();
   refreshInfoBar();
   autoJumpToRecord();
-};
 
-// 自动加载头像
-document.getElementById('avatarInput').onchange = function(e){
-  const file=e.target.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    baby.avatar=ev.target.result;
-    document.getElementById('avatarPreview').src=baby.avatar;
-    localStorage.setItem('baby',JSON.stringify(baby));
-    refreshInfoBar();
-  }
-  reader.readAsDataURL(file);
-}
+  // 头像上传修复
+  document.getElementById('avatarInput').onchange = function(e){
+    const file=e.target.files[0];
+    if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      baby.avatar=ev.target.result;
+      document.getElementById('avatarPreview').src=baby.avatar;
+      localStorage.setItem('baby',JSON.stringify(baby));
+      refreshInfoBar();
+    };
+    reader.readAsDataURL(file);
+  };
+};
 
 // 自动进入记录页
 function autoJumpToRecord(){
@@ -243,14 +246,17 @@ function autoJumpToRecord(){
   }
 }
 
-// 保存宝宝信息
+// 保存宝宝信息（修复）
 function saveBaby(){
-  const id=document.getElementById('babyId').value;
-  const birth=document.getElementById('babyBirth').value;
-  if(!id||!birth)return alert('请填写宝宝ID和生日');
-  baby.id=id;
-  baby.birth=birth;
-  localStorage.setItem('baby',JSON.stringify(baby));
+  const id=document.getElementById('babyId').value.trim();
+  const birth=document.getElementById('babyBirth').value.trim();
+  if(!id || !birth){
+    alert('请填写宝宝ID和生日');
+    return;
+  }
+  baby.id = id;
+  baby.birth = birth;
+  localStorage.setItem('baby', JSON.stringify(baby));
   loadBaby();
   refreshInfoBar();
   go('record');
@@ -262,6 +268,10 @@ function loadBaby(){
     document.getElementById('age').value='';
     return;
   }
+  document.getElementById('avatarPreview').src = baby.avatar;
+  document.getElementById('babyId').value = baby.id;
+  document.getElementById('babyBirth').value = baby.birth;
+
   const b=new Date(baby.birth);
   const now=new Date();
   let m=(now.getFullYear()-b.getFullYear())*12 + now.getMonth()-b.getMonth();
@@ -273,33 +283,37 @@ function loadBaby(){
   const txt=`${m}月龄${d}天`;
   document.getElementById('babyMonth').innerText=txt;
   document.getElementById('age').value=txt;
-  document.getElementById('avatarPreview').src=baby.avatar;
 }
 
 // 顶部信息栏
 function refreshInfoBar(){
-  const avatar=baby.avatar;
-  const id=baby.id||'未设置';
+  if(!baby) return;
+  const avatar=baby.avatar || 'https://picsum.photos/200/200';
+  const id=baby.id || '未设置';
   loadBaby();
-  const month=document.getElementById('age').value;
-  [1,2,3].forEach(i=>{
-    document.getElementById('barAvatar'+i).src=avatar;
-    document.getElementById('barId'+i).innerText='ID：'+id;
-    document.getElementById('barMonth'+i).innerText=month;
-  })
+  const month=document.getElementById('age').value || '未设置';
+  for(let i=1;i<=3;i++){
+    const img=document.getElementById('barAvatar'+i);
+    const idEl=document.getElementById('barId'+i);
+    const monthEl=document.getElementById('barMonth'+i);
+    if(img) img.src=avatar;
+    if(idEl) idEl.innerText='ID：'+id;
+    if(monthEl) monthEl.innerText=month;
+  }
 }
 
 // 导航
 function go(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
-  document.getElementById('page'+p[0].toUpperCase()+p.slice(1)).classList.add('active');
-  if(event)event.target.classList.add('active');
-  if(p==='analysis')refreshAllChart();
+  const page=document.getElementById('page'+p.charAt(0).toUpperCase()+p.slice(1));
+  if(page) page.classList.add('active');
+  if(event) event.target.classList.add('active');
   refreshInfoBar();
+  if(p==='analysis') refreshAllChart();
 }
 
-// 表情选择
+// 表情
 function setFeed(t){
   currentFeed=t;
   document.querySelectorAll('#pageRecord .feedback button').forEach(b=>b.classList.remove('active'));
@@ -307,7 +321,7 @@ function setFeed(t){
   document.getElementById('badNote').style.display=t===0?'block':'none';
 }
 
-// 辅食联想
+// 联想
 function showSuggest(){
   const v=document.getElementById('food').value.toLowerCase();
   const box=document.getElementById('suggestBox');
@@ -322,16 +336,20 @@ function pick(v){
   document.getElementById('suggestBox').style.display='none';
 }
 
-// 添加记录
+// 添加记录（新增克数）
 function addRecord(){
   loadBaby();
   const age=document.getElementById('age').value;
   const time=document.getElementById('eatTime').value;
   const food=document.getElementById('food').value;
+  const gram=document.getElementById('gram').value || '';
   const type=document.getElementById('type').value;
   const note=document.getElementById('badNote').value;
-  if(!age||!time||!food||currentFeed==null)return alert('请填写完整');
-  records.push({age,time,food,type,feed:currentFeed,note});
+  if(!age || !time || !food || currentFeed==null){
+    alert('请填写完整：月龄、时间、辅食、表情');
+    return;
+  }
+  records.push({age,time,food,gram,type,feed:currentFeed,note});
   localStorage.setItem('records',JSON.stringify(records));
   checkUnlock();
   renderRecords();
@@ -341,6 +359,7 @@ function addRecord(){
 function clearForm(){
   document.getElementById('eatTime').value='';
   document.getElementById('food').value='';
+  document.getElementById('gram').value='';
   document.getElementById('badNote').value='';
   document.getElementById('badNote').style.display='none';
   currentFeed=null;
@@ -354,6 +373,7 @@ function renderRecords(){
     <td>${r.age}</td>
     <td>${r.time.replace('T',' ')}</td>
     <td>${r.food}</td>
+    <td>${r.gram || '-'}</td>
     <td>${r.feed==1?'😊':'😢'}</td>
     <td>${r.note||'-'}</td>
     <td><button onclick="edit(${i})">编辑</button></td>
@@ -362,9 +382,11 @@ function renderRecords(){
 
 // 编辑
 function edit(i){
-  editIndex=i;const r=records[i];
+  editIndex=i;
+  const r=records[i];
   document.getElementById('editTime').value=r.time;
   document.getElementById('editFood').value=r.food;
+  document.getElementById('editGram').value=r.gram || '';
   document.getElementById('editNote').value=r.note||'';
   document.querySelectorAll('#editPopup .feedback button').forEach(b=>b.classList.remove('active'));
   document.getElementById(r.feed==1?'eGood':'eBad').classList.add('active');
@@ -375,15 +397,16 @@ function saveEdit(){
   if(editIndex<0)return;
   const f=document.getElementById('editFood').value;
   const t=document.getElementById('editTime').value;
+  const g=document.getElementById('editGram').value;
   const n=document.getElementById('editNote').value;
   const feed=document.getElementById('eGood').classList.contains('active')?1:0;
-  if(!f||!t)return alert('不能为空');
-  records[editIndex]={...records[editIndex],food:f,time:t,feed:feed,note:n};
+  if(!f || !t) return alert('不能为空');
+  records[editIndex]={...records[editIndex],food:f,time:t,gram:g,feed:feed,note:n};
   localStorage.setItem('records',JSON.stringify(records));
   renderRecords();refreshAllChart();closeEdit();
 }
 
-// 连续3天笑脸解锁
+// 解锁
 function checkUnlock(){
   if(records.length<3)return;
   const last3=records.slice(-3);
@@ -403,31 +426,49 @@ function renderCollection(){
   g.innerHTML=collection.map(i=>`<div class="food"><h3>${i.name}</h3><span>已解锁</span></div>`).join('');
 }
 
-// 图表分析
+//========== 统计图表（堆叠柱状图 + 显示辅食名） ==========
 function refreshAllChart(){
-  analysisDaily();
+  drawStackChart();
   analysisAccept();
-  analysisFoodType();
   analysisSummary();
 }
-function analysisDaily(){
-  const days=[],goods=[],bads=[];
-  for(let i=5;i>=0;i--){
-    const d=new Date();d.setDate(d.getDate()-i);
-    const pre=d.toISOString().split('T')[0];
-    const list=records.filter(r=>r.time.startsWith(pre));
-    days.push(pre.slice(5));
-    goods.push(list.filter(x=>x.feed==1).length);
-    bads.push(list.filter(x=>x.feed==0).length);
-  }
-  if(charts.days)charts.days.destroy();
-  const ctx=document.getElementById('chartDays').getContext('2d');
-  charts.days=new Chart(ctx,{
+
+// 堆叠图 + 显示辅食名称
+function drawStackChart(){
+  const dayMap={};
+  records.forEach(r=>{
+    const day=r.time.split('T')[0];
+    if(!dayMap[day])dayMap[day]=[];
+    dayMap[day].push(r);
+  });
+  const days=Object.keys(dayMap).sort().slice(-6);
+  const foodList=[...new Set(records.map(x=>x.food))];
+  const datasets=foodList.map((name,idx)=>{
+    const data=days.map(day=>{
+      const items=dayMap[day]||[];
+      return items.filter(x=>x.food===name).length;
+    });
+    const colors=['#ff69b4','#74b9ff','#fd79a8','#fdcb6e','#00b894','#a29bfe'];
+    return {
+      label:name,
+      data:data,
+      backgroundColor:colors[idx%colors.length]
+    };
+  });
+  if(charts.stack)charts.stack.destroy();
+  const ctx=document.getElementById('stackChart').getContext('2d');
+  charts.stack=new Chart(ctx,{
     type:'bar',
-    data:{labels:days,datasets:[{label:'喜欢',data:goods,backgroundColor:'#ff69b4'},{label:'不适应',data:bads,backgroundColor:'#aaa'}]},
-    options:{scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}
+    data:{labels:days.map(d=>d.slice(5)),datasets},
+    options:{
+      responsive:true,
+      plugins:{legend:{position:'bottom'}},
+      scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}
+    }
   });
 }
+
+// 接受度
 function analysisAccept(){
   const good=records.filter(x=>x.feed==1).length;
   const bad=records.length-good;
@@ -435,21 +476,14 @@ function analysisAccept(){
   const ctx=document.getElementById('chartAccept').getContext('2d');
   charts.accept=new Chart(ctx,{
     type:'doughnut',
-    data:{labels:['喜欢😊','不适应😢'],datasets:[{data:[good,bad],backgroundColor:['#ff69b4','#999']}]}
+    data:{
+      labels:['喜欢😊','不适应😢'],
+      datasets:[{data:[good,bad],backgroundColor:['#ff69b4','#999']}]
+    }
   });
 }
-function analysisFoodType(){
-  const typeMap={主食类:0,蔬菜类:0,水果类:0,肉类:0,蛋类:0};
-  records.forEach(r=>{const t=r.type||'主食类';typeMap[t]++});
-  const labels=[],datas=[];
-  for(let k in typeMap){if(typeMap[k]>0){labels.push(k);datas.push(typeMap[k])}}
-  if(charts.type)charts.type.destroy();
-  const ctx=document.getElementById('chartType').getContext('2d');
-  charts.type=new Chart(ctx,{
-    type:'pie',
-    data:{labels,labels,datasets:[{data:datas,backgroundColor:['#ff69b4','#74b9ff','#fd79a8','#fdcb6e','#00b894']}]}
-  });
-}
+
+// 摘要
 function analysisSummary(){
   const total=records.length;
   const good=records.filter(x=>x.feed==1).length;
@@ -458,33 +492,29 @@ function analysisSummary(){
   document.getElementById('sumInfo').innerText=`总记录：${total}次｜喜欢：${good}次｜不适应：${bad}次｜已尝试：${foods}种`;
 }
 
-// 分享功能
+// 分享
 function shareData(){
-  const data={
-    baby,
-    records,
-    collection
-  };
+  const data={baby,records,collection};
   const encoded=encodeURIComponent(JSON.stringify(data));
-  const url=`${window.location.origin}${window.location.pathname}#data=${encoded}`;
+  const url=window.location.origin+window.location.pathname+'#data='+encoded;
   if(navigator.share){
-    navigator.share({title:baby.id+'辅食记录',text:'一起来记录宝宝辅食',url:url})
+    navigator.share({title:baby.id+'辅食记录',text:'宝宝辅食喂养记录',url:url})
   }else{
     prompt('复制链接发给家人：',url);
   }
 }
 
-// 接收分享数据
+// 接收分享
 window.onhashchange=()=>{
   try{
-    const hash=window.location.hash.slice(1);
-    if(!hash.startsWith('data='))return;
-    const json=decodeURIComponent(hash.replace('data=',''));
-    const data=JSON.parse(json);
-    if(data.baby){baby=data.baby;localStorage.setItem('baby',JSON.stringify(baby))}
-    if(data.records){records=data.records;localStorage.setItem('records',JSON.stringify(records))}
-    if(data.collection){collection=data.collection;localStorage.setItem('foodCollection',JSON.stringify(collection))}
-    alert('已同步家人数据！');
+    const h=window.location.hash;
+    if(!h.includes('data='))return;
+    const j=decodeURIComponent(h.replace('#data=',''));
+    const d=JSON.parse(j);
+    if(d.baby){baby=d.baby;localStorage.setItem('baby',JSON.stringify(baby));}
+    if(d.records){records=d.records;localStorage.setItem('records',JSON.stringify(records));}
+    if(d.collection){collection=d.collection;localStorage.setItem('foodCollection',JSON.stringify(collection));}
+    alert('同步成功！');
     window.location.hash='';
     window.location.reload();
   }catch(e){alert('同步失败')}
