@@ -13,6 +13,15 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
 .title{font-size:22px;font-weight:bold;text-align:center;margin:16px 0;color:#ff69b4}
 .btn{background:#ff69b4;color:white;border:none;border-radius:14px;padding:14px;width:100%;margin-top:10px;font-weight:bold;font-size:16px}
 .grayBtn{background:#ccc;color:white}
+.avatar{width:70px;height:70px;border-radius:50%;object-fit:cover;margin:10px auto;display:block;border:3px solid #ff69b4}
+.avatarInput{display:none}
+.avatarLabel{text-align:center;color:#ff69b4;font-size:14px;display:block;margin:5px 0}
+.babyInfoBar{display:flex;align-items:center;gap:10px;padding:10px;background:white;border-radius:16px;margin-bottom:16px}
+.babyInfoBar img{width:50px;height:50px;border-radius:50%}
+.babyInfoBar .info{flex:1}
+.babyInfoBar .name{font-size:16px;font-weight:bold}
+.babyInfoBar .id{font-size:12px;color:#888}
+.shareBtn{background:#00b894;color:white;border:none;border-radius:12px;padding:10px 14px;margin-top:10px;width:100%}
 .nav{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:20px;position:sticky;bottom:0;background:#fff5f7;padding:8px 0}
 .nav button{background:white;border:1px solid #ff69b4;color:#ff69b4;border-radius:12px;padding:10px 4px;font-size:12px}
 .nav button.active{background:#ff69b4;color:white}
@@ -34,12 +43,9 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
 .food{background:white;border-radius:16px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
 .food h3{margin:8px 0;font-size:15px}
 .food span{font-size:12px}
-.chart-container{background:white;border-radius:16px;padding:16px;margin-top:16px}
-.stat-table{background:white;border-radius:16px;padding:14px;margin-top:16px;overflow-x:auto}
-.stat-row{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;min-width:320px;text-align:center}
-.stat-cell{font-size:13px}
-.stat-label{font-size:12px;color:#999}
-.avg-tip{text-align:center;color:#ff69b4;font-weight:bold;margin:8px 0}
+.chart-box{background:white;border-radius:16px;padding:16px;margin-bottom:16px}
+.chart-box h4{margin-bottom:10px;font-size:14px;color:#555}
+.avg-tip{text-align:center;color:#ff69b4;font-weight:bold;margin:8px 0;font-size:14px}
 .popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:999}
 .popup-box{background:white;padding:24px;border-radius:20px;width:90%;max-width:320px}
 .flexRow{display:flex;gap:10px;margin-top:12px}
@@ -48,15 +54,22 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
 </head>
 <body>
 
-<!-- 0. 宝宝信息页（默认首页）-->
+<!-- 0.宝宝信息页 -->
 <div class="page active" id="pageBaby">
-  <div class="title">👶 宝宝信息</div>
+  <div class="title">👶宝宝信息</div>
+  <img id="avatarPreview" class="avatar" src="https://picsum.photos/200/200">
+  <label class="avatarLabel" for="avatarInput">更换头像</label>
+  <input type="file" id="avatarInput" class="avatarInput" accept="image/*">
+  
   <div class="form">
     <input type="text" id="babyId" placeholder="请输入宝宝ID（用于家人同步）">
     <input type="date" id="babyBirth" placeholder="请输入宝宝生日">
-    <div style="color:#ff69b4;margin:10px 0" id="babyMonth"></div>
-    <button class="btn" onclick="saveBaby()">进入辅食记录</button>
+    <div style="color:#ff69b4;margin:10px 0;text-align:center" id="babyMonth"></div>
+    <button class="btn" onclick="saveBaby()">保存并进入</button>
   </div>
+
+  <button class="shareBtn" onclick="shareData()">📤分享给家人</button>
+
   <div class="nav">
     <button class="active" onclick="go('baby')">宝宝信息</button>
     <button onclick="go('record')">辅食记录</button>
@@ -65,9 +78,16 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
   </div>
 </div>
 
-<!-- 1. 记录页 -->
+<!-- 1.记录页 -->
 <div class="page" id="pageRecord">
-  <div class="title">📋 辅食记录</div>
+  <div class="babyInfoBar">
+    <img id="barAvatar">
+    <div class="info">
+      <div class="name" id="barMonth"></div>
+      <div class="id" id="barId"></div>
+    </div>
+  </div>
+  <div class="title">📋辅食记录</div>
   <div class="form">
     <input type="text" id="age" readonly placeholder="自动获取宝宝月龄">
     <input type="datetime-local" id="eatTime" step="1">
@@ -91,6 +111,9 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
       <tbody id="recordList"></tbody>
     </table>
   </div>
+
+  <button class="shareBtn" onclick="shareData()">📤分享给家人</button>
+
   <div class="nav">
     <button onclick="go('baby')">宝宝信息</button>
     <button class="active" onclick="go('record')">辅食记录</button>
@@ -99,10 +122,20 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
   </div>
 </div>
 
-<!-- 2. 辅食图鉴 -->
+<!-- 2.辅食图鉴 -->
 <div class="page" id="pageMain">
-  <div class="title">🍼 辅食图鉴</div>
+  <div class="babyInfoBar">
+    <img id="barAvatar2">
+    <div class="info">
+      <div class="name" id="barMonth2"></div>
+      <div class="id" id="barId2"></div>
+    </div>
+  </div>
+  <div class="title">🍼辅食图鉴</div>
   <div class="grid" id="foodGrid"></div>
+
+  <button class="shareBtn" onclick="shareData()">📤分享给家人</button>
+
   <div class="nav">
     <button onclick="go('baby')">宝宝信息</button>
     <button onclick="go('record')">辅食记录</button>
@@ -111,37 +144,32 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
   </div>
 </div>
 
-<!-- 3. 喂养分析 -->
+<!-- 3.喂养分析页 -->
 <div class="page" id="pageAnalysis">
-  <div class="title">📊 喂养分析</div>
-  <div class="stat-table">
-    <div class="stat-row">
-      <div class="stat-cell"><div class="stat-label">日1</div><div id="d1-count">0</div></div>
-      <div class="stat-cell"><div class="stat-label">日2</div><div id="d2-count">0</div></div>
-      <div class="stat-cell"><div class="stat-label">日3</div><div id="d3-count">0</div></div>
-      <div class="stat-cell"><div class="stat-label">日4</div><div id="d4-count">0</div></div>
-      <div class="stat-cell"><div class="stat-label">日5</div><div id="d5-count">0</div></div>
-      <div class="stat-cell"><div class="stat-label">今日</div><div id="d6-count">0</div></div>
-    </div>
-    <div class="stat-row">
-      <div class="stat-cell"><div class="stat-label">😊</div><div id="d1-good">0</div></div>
-      <div class="stat-cell"><div class="stat-label">😊</div><div id="d2-good">0</div></div>
-      <div class="stat-cell"><div class="stat-label">😊</div><div id="d3-good">0</div></div>
-      <div class="stat-cell"><div class="stat-label">😊</div><div id="d4-good">0</div></div>
-      <div class="stat-cell"><div class="stat-label">😊</div><div id="d5-good">0</div></div>
-      <div class="stat-cell"><div class="stat-label">😊</div><div id="d6-good">0</div></div>
-    </div>
-    <div class="stat-row">
-      <div class="stat-cell"><div class="stat-label">😢</div><div id="d1-bad">0</div></div>
-      <div class="stat-cell"><div class="stat-label">😢</div><div id="d2-bad">0</div></div>
-      <div class="stat-cell"><div class="stat-label">😢</div><div id="d3-bad">0</div></div>
-      <div class="stat-cell"><div class="stat-label">😢</div><div id="d4-bad">0</div></div>
-      <div class="stat-cell"><div class="stat-label">😢</div><div id="d5-bad">0</div></div>
-      <div class="stat-cell"><div class="stat-label">😢</div><div id="d6-bad">0</div></div>
+  <div class="babyInfoBar">
+    <img id="barAvatar3">
+    <div class="info">
+      <div class="name" id="barMonth3"></div>
+      <div class="id" id="barId3"></div>
     </div>
   </div>
-  <div class="avg-tip" id="avgTip">近6天平均 0 次</div>
-  <div class="chart-container"><canvas id="stackChart"></canvas></div>
+  <div class="title">📊喂养分析</div>
+  <div class="chart-box">
+    <h4>近6天辅食次数趋势</h4>
+    <canvas height="180" id="chartDays"></canvas>
+  </div>
+  <div class="chart-box">
+    <h4>接受度统计（喜欢/不适应）</h4>
+    <canvas height="180" id="chartAccept"></canvas>
+  </div>
+  <div class="chart-box">
+    <h4>辅食种类分布</h4>
+    <canvas height="180" id="chartType"></canvas>
+  </div>
+  <div class="avg-tip" id="sumInfo"></div>
+
+  <button class="shareBtn" onclick="shareData()">📤分享给家人</button>
+
   <div class="nav">
     <button onclick="go('baby')">宝宝信息</button>
     <button onclick="go('record')">辅食记录</button>
@@ -171,7 +199,7 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
 <!-- 解锁弹窗 -->
 <div class="popup" id="unlockPopup">
   <div class="popup-box" style="text-align:center">
-    <h2>🎉 解锁成功</h2>
+    <h2>🎉解锁成功</h2>
     <p id="unlockText"></p>
     <button class="btn" onclick="closeUnlock()">确定</button>
   </div>
@@ -179,30 +207,56 @@ html,body{width:100%;overflow-x:hidden;background:#fff5f7}
 
 <script>
 let records = JSON.parse(localStorage.getItem('records')) || [];
-let baby = JSON.parse(localStorage.getItem('baby')) || {id:'',birth:''};
+let baby = JSON.parse(localStorage.getItem('baby')) || {id:'', birth:'', avatar:'https://picsum.photos/200/200'};
 let collection = JSON.parse(localStorage.getItem('foodCollection')) || [];
 let currentFeed = null;
 let editIndex = -1;
-let chart = null;
+let charts = {};
 
-window.onload=()=>{
-    loadBaby();
-    renderRecords();
-    renderCollection();
-    analysis();
+window.onload = () => {
+  loadBaby();
+  renderRecords();
+  renderCollection();
+  refreshAllChart();
+  refreshInfoBar();
+  autoJumpToRecord();
+};
+
+// 自动加载头像
+document.getElementById('avatarInput').onchange = function(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    baby.avatar=ev.target.result;
+    document.getElementById('avatarPreview').src=baby.avatar;
+    localStorage.setItem('baby',JSON.stringify(baby));
+    refreshInfoBar();
+  }
+  reader.readAsDataURL(file);
 }
 
-// 宝宝信息 + 精确月龄
+// 自动进入记录页
+function autoJumpToRecord(){
+  if(baby.id && baby.birth){
+    go('record');
+  }
+}
+
+// 保存宝宝信息
 function saveBaby(){
   const id=document.getElementById('babyId').value;
   const birth=document.getElementById('babyBirth').value;
   if(!id||!birth)return alert('请填写宝宝ID和生日');
-  baby={id,birth};
+  baby.id=id;
+  baby.birth=birth;
   localStorage.setItem('baby',JSON.stringify(baby));
   loadBaby();
+  refreshInfoBar();
   go('record');
 }
 
+// 计算月龄
 function loadBaby(){
   if(!baby.birth){
     document.getElementById('age').value='';
@@ -210,32 +264,47 @@ function loadBaby(){
   }
   const b=new Date(baby.birth);
   const now=new Date();
-  let m=(now.getFullYear()-b.getFullYear())*12 + (now.getMonth()-b.getMonth());
+  let m=(now.getFullYear()-b.getFullYear())*12 + now.getMonth()-b.getMonth();
   let d=now.getDate()-b.getDate();
   if(d<0){
     m--;
     d+=new Date(b.getFullYear(),b.getMonth()+1,0).getDate();
   }
-  const text=`${m}月龄${d}天`;
-  document.getElementById('babyMonth').innerText=text;
-  document.getElementById('age').value=text;
+  const txt=`${m}月龄${d}天`;
+  document.getElementById('babyMonth').innerText=txt;
+  document.getElementById('age').value=txt;
+  document.getElementById('avatarPreview').src=baby.avatar;
+}
+
+// 顶部信息栏
+function refreshInfoBar(){
+  const avatar=baby.avatar;
+  const id=baby.id||'未设置';
+  loadBaby();
+  const month=document.getElementById('age').value;
+  [1,2,3].forEach(i=>{
+    document.getElementById('barAvatar'+i).src=avatar;
+    document.getElementById('barId'+i).innerText='ID：'+id;
+    document.getElementById('barMonth'+i).innerText=month;
+  })
 }
 
 // 导航
 function go(p){
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
-  document.getElementById('page'+p.charAt(0).toUpperCase()+p.slice(1)).classList.add('active');
-  if(event) event.target.classList.add('active');
-  if(p=='analysis')analysis();
+  document.getElementById('page'+p[0].toUpperCase()+p.slice(1)).classList.add('active');
+  if(event)event.target.classList.add('active');
+  if(p==='analysis')refreshAllChart();
+  refreshInfoBar();
 }
 
-// 表情
+// 表情选择
 function setFeed(t){
   currentFeed=t;
   document.querySelectorAll('#pageRecord .feedback button').forEach(b=>b.classList.remove('active'));
   event.target.classList.add('active');
-  document.getElementById('badNote').style.display=t==0?'block':'none';
+  document.getElementById('badNote').style.display=t===0?'block':'none';
 }
 
 // 辅食联想
@@ -259,22 +328,16 @@ function addRecord(){
   const age=document.getElementById('age').value;
   const time=document.getElementById('eatTime').value;
   const food=document.getElementById('food').value;
+  const type=document.getElementById('type').value;
   const note=document.getElementById('badNote').value;
-
-  if(!age || !time || !food || currentFeed == null){
-    alert('请填写完整：月龄、时间、辅食、表情');
-    return;
-  }
-
-  records.push({age,time,food,feed:currentFeed,note});
+  if(!age||!time||!food||currentFeed==null)return alert('请填写完整');
+  records.push({age,time,food,type,feed:currentFeed,note});
   localStorage.setItem('records',JSON.stringify(records));
-
   checkUnlock();
   renderRecords();
-  analysis();
+  refreshAllChart();
   clearForm();
 }
-
 function clearForm(){
   document.getElementById('eatTime').value='';
   document.getElementById('food').value='';
@@ -293,47 +356,34 @@ function renderRecords(){
     <td>${r.food}</td>
     <td>${r.feed==1?'😊':'😢'}</td>
     <td>${r.note||'-'}</td>
-    <td>
-      <button onclick="edit(${i})">编辑</button>
-    </td>
+    <td><button onclick="edit(${i})">编辑</button></td>
   </tr>`).join('');
 }
 
 // 编辑
 function edit(i){
-  editIndex=i;
-  const r=records[i];
+  editIndex=i;const r=records[i];
   document.getElementById('editTime').value=r.time;
   document.getElementById('editFood').value=r.food;
   document.getElementById('editNote').value=r.note||'';
   document.querySelectorAll('#editPopup .feedback button').forEach(b=>b.classList.remove('active'));
-  if(r.feed == 1){
-    document.getElementById('eGood').classList.add('active');
-  }else{
-    document.getElementById('eBad').classList.add('active');
-  }
+  document.getElementById(r.feed==1?'eGood':'eBad').classList.add('active');
   document.getElementById('editPopup').style.display='flex';
 }
-function closeEdit(){
-  document.getElementById('editPopup').style.display='none';
-  editIndex=-1;
-}
+function closeEdit(){document.getElementById('editPopup').style.display='none';editIndex=-1}
 function saveEdit(){
-  if(editIndex === -1) return;
+  if(editIndex<0)return;
   const f=document.getElementById('editFood').value;
   const t=document.getElementById('editTime').value;
   const n=document.getElementById('editNote').value;
-  const feed = document.getElementById('eGood').classList.contains('active') ? 1 : 0;
-  if(!f || !t) return alert('不能为空');
-
-  records[editIndex] = {...records[editIndex], food:f, time:t, feed:feed, note:n};
-  localStorage.setItem('records', JSON.stringify(records));
-  renderRecords();
-  analysis();
-  closeEdit();
+  const feed=document.getElementById('eGood').classList.contains('active')?1:0;
+  if(!f||!t)return alert('不能为空');
+  records[editIndex]={...records[editIndex],food:f,time:t,feed:feed,note:n};
+  localStorage.setItem('records',JSON.stringify(records));
+  renderRecords();refreshAllChart();closeEdit();
 }
 
-// 连续3个笑脸解锁新辅食
+// 连续3天笑脸解锁
 function checkUnlock(){
   if(records.length<3)return;
   const last3=records.slice(-3);
@@ -347,58 +397,100 @@ function checkUnlock(){
   document.getElementById('unlockPopup').style.display='flex';
   renderCollection();
 }
-
 function renderCollection(){
   const g=document.getElementById('foodGrid');
-  if(!collection.length){
-    g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无解锁</div>';
-    return;
-  }
+  if(!collection.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无解锁</div>';return}
   g.innerHTML=collection.map(i=>`<div class="food"><h3>${i.name}</h3><span>已解锁</span></div>`).join('');
 }
 
-// 分析
-function analysis(){
-  const days=[];
+// 图表分析
+function refreshAllChart(){
+  analysisDaily();
+  analysisAccept();
+  analysisFoodType();
+  analysisSummary();
+}
+function analysisDaily(){
+  const days=[],goods=[],bads=[];
   for(let i=5;i>=0;i--){
-    const d=new Date();
-    d.setDate(d.getDate()-i);
-    days.push(d);
-  }
-  const data=days.map(day=>{
-    const pre=day.toISOString().split('T')[0];
+    const d=new Date();d.setDate(d.getDate()-i);
+    const pre=d.toISOString().split('T')[0];
     const list=records.filter(r=>r.time.startsWith(pre));
-    return {
-      count:list.length,
-      good:list.filter(x=>x.feed==1).length,
-      bad:list.filter(x=>x.feed==0).length
-    }
-  });
-  ['d1','d2','d3','d4','d5','d6'].forEach((id,i)=>{
-    document.getElementById(`${id}-count`).innerText=data[i].count;
-    document.getElementById(`${id}-good`).innerText=data[i].good;
-    document.getElementById(`${id}-bad`).innerText=data[i].bad;
-  });
-  const total=data.reduce((s,x)=>s+x.count,0);
-  document.getElementById('avgTip').innerText=`近6天平均：${(total/6).toFixed(1)}次`;
-  const ctx=document.getElementById('stackChart').getContext('2d');
-  if(chart)chart.destroy();
-  chart=new Chart(ctx,{
+    days.push(pre.slice(5));
+    goods.push(list.filter(x=>x.feed==1).length);
+    bads.push(list.filter(x=>x.feed==0).length);
+  }
+  if(charts.days)charts.days.destroy();
+  const ctx=document.getElementById('chartDays').getContext('2d');
+  charts.days=new Chart(ctx,{
     type:'bar',
-    data:{
-      labels:['1','2','3','4','5','今'],
-      datasets:[
-        {label:'😊',data:data.map(x=>x.good),backgroundColor:'#ff69b4'},
-        {label:'😢',data:data.map(x=>x.bad),backgroundColor:'#aaa'}
-      ]
-    },
+    data:{labels:days,datasets:[{label:'喜欢',data:goods,backgroundColor:'#ff69b4'},{label:'不适应',data:bads,backgroundColor:'#aaa'}]},
     options:{scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}
   });
 }
-
-function closeUnlock(){
-  document.getElementById('unlockPopup').style.display='none';
+function analysisAccept(){
+  const good=records.filter(x=>x.feed==1).length;
+  const bad=records.length-good;
+  if(charts.accept)charts.accept.destroy();
+  const ctx=document.getElementById('chartAccept').getContext('2d');
+  charts.accept=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels:['喜欢😊','不适应😢'],datasets:[{data:[good,bad],backgroundColor:['#ff69b4','#999']}]}
+  });
 }
+function analysisFoodType(){
+  const typeMap={主食类:0,蔬菜类:0,水果类:0,肉类:0,蛋类:0};
+  records.forEach(r=>{const t=r.type||'主食类';typeMap[t]++});
+  const labels=[],datas=[];
+  for(let k in typeMap){if(typeMap[k]>0){labels.push(k);datas.push(typeMap[k])}}
+  if(charts.type)charts.type.destroy();
+  const ctx=document.getElementById('chartType').getContext('2d');
+  charts.type=new Chart(ctx,{
+    type:'pie',
+    data:{labels,labels,datasets:[{data:datas,backgroundColor:['#ff69b4','#74b9ff','#fd79a8','#fdcb6e','#00b894']}]}
+  });
+}
+function analysisSummary(){
+  const total=records.length;
+  const good=records.filter(x=>x.feed==1).length;
+  const bad=total-good;
+  const foods=[...new Set(records.map(x=>x.food))].length;
+  document.getElementById('sumInfo').innerText=`总记录：${total}次｜喜欢：${good}次｜不适应：${bad}次｜已尝试：${foods}种`;
+}
+
+// 分享功能
+function shareData(){
+  const data={
+    baby,
+    records,
+    collection
+  };
+  const encoded=encodeURIComponent(JSON.stringify(data));
+  const url=`${window.location.origin}${window.location.pathname}#data=${encoded}`;
+  if(navigator.share){
+    navigator.share({title:baby.id+'辅食记录',text:'一起来记录宝宝辅食',url:url})
+  }else{
+    prompt('复制链接发给家人：',url);
+  }
+}
+
+// 接收分享数据
+window.onhashchange=()=>{
+  try{
+    const hash=window.location.hash.slice(1);
+    if(!hash.startsWith('data='))return;
+    const json=decodeURIComponent(hash.replace('data=',''));
+    const data=JSON.parse(json);
+    if(data.baby){baby=data.baby;localStorage.setItem('baby',JSON.stringify(baby))}
+    if(data.records){records=data.records;localStorage.setItem('records',JSON.stringify(records))}
+    if(data.collection){collection=data.collection;localStorage.setItem('foodCollection',JSON.stringify(collection))}
+    alert('已同步家人数据！');
+    window.location.hash='';
+    window.location.reload();
+  }catch(e){alert('同步失败')}
+}
+
+function closeUnlock(){document.getElementById('unlockPopup').style.display='none'}
 </script>
 </body>
 </html>
